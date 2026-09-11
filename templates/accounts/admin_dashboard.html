@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | Longevity+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <h1 class="fw-bold">Admin Dashboard</h1>
+
+    <p class="text-secondary">
+        Welcome, {{ request.user.get_full_name|default:request.user.username }}.
+    </p>
+
+    <a href="/logout/" class="btn btn-dark">
+        Logout
+    </a>
+</div>
+
+{% endblock %}

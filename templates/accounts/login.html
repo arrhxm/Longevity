@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Longevity+{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container py-5">
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-6 col-lg-4">
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold">Welcome back</h1>
+                    <p class="text-secondary">
+                        Login to your Longevity+ account
+                    </p>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error }}
+                            </div>
+                        {% endif %}
+
+                        <form method="POST">
+
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Username
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="username"
+                                    class="form-control"
+                                    placeholder="Enter username"
+                                    required
+                                >
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    name="password"
+                                    class="form-control"
+                                    placeholder="Enter password"
+                                    required
+                                >
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-dark w-100"
+                            >
+                                Login
+                            </button>
+
+                        </form>
+
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="/" class="text-decoration-none">
+                        ← Back to Longevity+
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
