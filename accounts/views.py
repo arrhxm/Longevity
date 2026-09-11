@@ -1,5 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render
+from clients.models import ClientProfile
+from .forms import ClientProfileForm
 
 
 def login_view(request):
@@ -79,4 +81,46 @@ def client_dashboard(request):
     if request.user.role != "CLIENT":
         return redirect("dashboard")
 
-    return render(request, "accounts/client_dashboard.html")
+    profile, created = ClientProfile.objects.get_or_create(
+        user=request.user
+    )
+
+    return render(
+        request,
+        "accounts/client_dashboard.html",
+        {
+            "profile": profile,
+        },
+    )
+def client_profile(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "CLIENT":
+        return redirect("dashboard")
+
+    profile, created = ClientProfile.objects.get_or_create(
+        user=request.user
+    )
+
+    if request.method == "POST":
+        form = ClientProfileForm(
+            request.POST,
+            instance=profile,
+        )
+
+        if form.is_valid():
+            form.save()
+            return redirect("client_profile")
+
+    else:
+        form = ClientProfileForm(instance=profile)
+
+    return render(
+        request,
+        "accounts/client_profile.html",
+        {
+            "form": form,
+            "profile": profile,
+        },
+    )

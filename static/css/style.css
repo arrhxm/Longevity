@@ -32,3 +32,12 @@ main {
 section {
     scroll-margin-top: 80px;
 }
+.form-control,
+.form-select {
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+}
+
+textarea.form-control {
+    resize: vertical;
+}

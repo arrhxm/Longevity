@@ -10,7 +10,7 @@ class ClientProfile(models.Model):
     height = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     current_weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     goal_weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    health_goals = models.TextField(blank=True)
+    health_goal = models.TextField(blank=True)
     medical_notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

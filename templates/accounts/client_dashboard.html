@@ -5,15 +5,421 @@
 {% block content %}
 
 <div class="container py-5">
-    <h1 class="fw-bold">My Dashboard</h1>
 
-    <p class="text-secondary">
-        Welcome, {{ request.user.get_full_name|default:request.user.username }}.
-    </p>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
 
-    <a href="/logout/" class="btn btn-dark">
-        Logout
-    </a>
+        <div>
+            <p class="text-secondary mb-1">
+                Welcome back,
+            </p>
+
+            <h1 class="fw-bold mb-0">
+                {{ request.user.first_name|default:request.user.username }}
+            </h1>
+        </div>
+
+        <a href="/logout/" class="btn btn-outline-dark">
+            Logout
+        </a>
+
+    </div>
+    <!-- Profile Summary -->
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <p class="text-secondary mb-1">
+                        Personal Information
+                    </p>
+
+                    <h4 class="fw-bold mb-0">
+                        My Profile
+                    </h4>
+                </div>
+
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <small class="text-secondary">
+                        Name
+                    </small>
+
+                    <p class="fw-semibold mb-0">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-secondary">
+                        Email
+                    </small>
+
+                    <p class="fw-semibold mb-0">
+                        {{ request.user.email|default:"Not provided" }}
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-secondary">
+                        Phone
+                    </small>
+
+                    <p class="fw-semibold mb-0">
+                        {{ profile.phone|default:"Not provided" }}
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-secondary">
+                        Height
+                    </small>
+
+                    <p class="fw-semibold mb-0">
+                        {{ profile.height|default:"--" }} cm
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-secondary">
+                        Health Goal
+                    </small>
+
+                    <p class="fw-semibold mb-0">
+                        {{ profile.health_goal|default:"Not provided" }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-6 col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <p class="text-secondary mb-2">
+                        Current Weight
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ profile.current_weight|default:"--" }}
+                    </h2>
+
+                    <small class="text-secondary">
+                        kg
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <p class="text-secondary mb-2">
+                        Goal Weight
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        {{ profile.goal_weight|default:"--" }}
+                    </h2>
+
+                    <small class="text-secondary">
+                        kg
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <p class="text-secondary mb-2">
+                        Membership
+                    </p>
+
+                    <h5 class="fw-bold mb-1">
+                        No active plan
+                    </h5>
+
+                    <small class="text-secondary">
+                        Membership status
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <p class="text-secondary mb-2">
+                        Next Appointment
+                    </p>
+
+                    <h5 class="fw-bold mb-1">
+                        No appointment
+                    </h5>
+
+                    <small class="text-secondary">
+                        Upcoming consultation
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Main Dashboard -->
+    <div class="row g-4">
+
+        <!-- Diet Plan -->
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+
+                        <div>
+                            <p class="text-secondary mb-1">
+                                Nutrition
+                            </p>
+
+                            <h4 class="fw-bold mb-0">
+                                My Diet Plan
+                            </h4>
+                        </div>
+
+                        <span class="badge text-bg-light">
+                            No active plan
+                        </span>
+
+                    </div>
+
+                    <div class="text-center py-5">
+
+                        <div class="display-5 mb-3">
+                            🥗
+                        </div>
+
+                        <h5 class="fw-bold">
+                            Your personalized diet plan will appear here
+                        </h5>
+
+                        <p class="text-secondary">
+                            Your dietitian will create and assign your
+                            personalized nutrition plan.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Notifications -->
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <p class="text-secondary mb-1">
+                        Updates
+                    </p>
+
+                    <h4 class="fw-bold mb-4">
+                        Notifications
+                    </h4>
+
+                    <div class="text-center py-4">
+
+                        <div class="display-6 mb-3">
+                            🔔
+                        </div>
+
+                        <p class="text-secondary mb-0">
+                            No new notifications
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Features -->
+    <div class="mt-5">
+
+        <h3 class="fw-bold mb-4">
+            My Longevity+
+        </h3>
+
+        <div class="row g-4">
+
+            <div class="col-md-6 col-lg-3">
+
+                <a href="{% url 'client_profile' %}" class="text-decoration-none text-dark">
+
+                    <div class="card border-0 shadow-sm h-100">
+
+                        <div class="card-body p-4">
+
+                            <div class="fs-2 mb-3">
+                                👤
+                            </div>
+
+                            <h5 class="fw-bold">
+                                My Profile
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                View and manage your information.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-md-6 col-lg-3">
+
+                <a href="#" class="text-decoration-none text-dark">
+
+                    <div class="card border-0 shadow-sm h-100">
+
+                        <div class="card-body p-4">
+
+                            <div class="fs-2 mb-3">
+                                📈
+                            </div>
+
+                            <h5 class="fw-bold">
+                                My Progress
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                Track your health journey.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-md-6 col-lg-3">
+
+                <a href="#" class="text-decoration-none text-dark">
+
+                    <div class="card border-0 shadow-sm h-100">
+
+                        <div class="card-body p-4">
+
+                            <div class="fs-2 mb-3">
+                                💳
+                            </div>
+
+                            <h5 class="fw-bold">
+                                Payments
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                View membership and payment details.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-md-6 col-lg-3">
+
+                <a href="#" class="text-decoration-none text-dark">
+
+                    <div class="card border-0 shadow-sm h-100">
+
+                        <div class="card-body p-4">
+
+                            <div class="fs-2 mb-3">
+                                📅
+                            </div>
+
+                            <h5 class="fw-bold">
+                                Appointments
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                View your upcoming consultations.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}

@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     admin_dashboard,
     client_dashboard,
+    client_profile,
     dashboard,
     dietitian_dashboard,
     login_view,
@@ -31,5 +32,10 @@ urlpatterns = [
         "client-dashboard/",
         client_dashboard,
         name="client_dashboard",
+    ),
+    path(
+        "profile/",
+        client_profile,
+        name="client_profile",
     ),
 ]
