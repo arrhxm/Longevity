@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'progress',
     'payments',
     'appointments',
+    'reviews',
 ]
 
 MIDDLEWARE = [
