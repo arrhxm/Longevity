@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Add Progress | Longevity+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="mb-5">
+
+        <a href="{% url 'dietitian_dashboard' %}"
+           class="text-decoration-none">
+            ← Back to Dashboard
+        </a>
+
+        <h1 class="fw-bold mt-3">
+            Add Progress Record
+        </h1>
+
+        <p class="text-secondary">
+            Record progress for
+            <strong>
+                {{ client.user.get_full_name|default:client.user.username }}
+            </strong>
+        </p>
+
+    </div>
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4 p-lg-5">
+
+                    <form method="POST">
+
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                Please correct the errors below.
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                Date
+                            </label>
+                            {{ form.date }}
+                        </div>
+
+                        <h5 class="fw-bold mb-4">
+                            Body Measurements
+                        </h5>
+
+                        <div class="row g-4">
+
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    Weight (kg)
+                                </label>
+                                {{ form.weight }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    Body Fat (%)
+                                </label>
+                                {{ form.body_fat_percentage }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    Waist
+                                </label>
+                                {{ form.waist }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    Chest
+                                </label>
+                                {{ form.chest }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    Hips
+                                </label>
+                                {{ form.hips }}
+                            </div>
+
+                        </div>
+
+                        <hr class="my-5">
+
+                        <div class="mb-4">
+
+                            <label class="form-label">
+                                Notes
+                            </label>
+
+                            {{ form.notes }}
+
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3">
+
+                            <a
+                                href="{% url 'dietitian_dashboard' %}"
+                                class="btn btn-outline-secondary"
+                            >
+                                Cancel
+                            </a>
+
+                            <button
+                                type="submit"
+                                class="btn btn-dark"
+                            >
+                                Save Progress
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

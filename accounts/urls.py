@@ -3,8 +3,10 @@ from django.urls import path
 from .views import (
     admin_dashboard,
     add_meal,
+    add_progress,
     client_dashboard,
     client_profile,
+    client_progress,
     create_diet_plan,
     dashboard,
     dietitian_dashboard,
@@ -48,5 +50,15 @@ urlpatterns = [
         "dietitian/diet-plan/<int:diet_plan_id>/add-meal/",
          add_meal,
         name="add_meal",
+    ),
+    path(
+        "dietitian/client/<int:client_id>/progress/add/",
+        add_progress,
+        name="add_progress",
+    ),
+    path(
+        "progress/",
+        client_progress,
+        name="client_progress",
     ),
 ]

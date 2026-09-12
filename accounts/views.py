@@ -4,6 +4,8 @@ from clients.models import ClientProfile
 from .forms import ClientProfileForm
 from nutrition.models import DietPlan, Meal
 from nutrition.forms import DietPlanForm, MealForm
+from progress.forms import ProgressRecordForm
+from progress.models import ProgressRecord
 
 
 def login_view(request):
@@ -217,5 +219,79 @@ def add_meal(request, diet_plan_id):
         {
             "form": form,
             "diet_plan": diet_plan,
+        },
+    )
+def add_progress(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    client = ClientProfile.objects.get(
+        user_id=client_id
+    )
+
+    if request.method == "POST":
+        form = ProgressRecordForm(request.POST)
+
+        if form.is_valid():
+            progress = form.save(commit=False)
+            progress.client = client
+            progress.save()
+
+            return redirect(
+                "add_progress",
+                client_id=client.id,
+            )
+
+    else:
+        form = ProgressRecordForm()
+
+    return render(
+        request,
+        "accounts/add_progress.html",
+        {
+            "form": form,
+            "client": client,
+        },
+    )
+def client_progress(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "CLIENT":
+        return redirect("dashboard")
+
+    profile, created = ClientProfile.objects.get_or_create(
+        user=request.user
+    )
+
+    progress_records = (
+        ProgressRecord.objects
+        .filter(client=profile)
+        .order_by("date")
+    )
+
+    chart_labels = [
+        record.date.strftime("%d %b")
+        for record in progress_records
+        if record.weight is not None
+    ]
+
+    chart_weights = [
+        float(record.weight)
+        for record in progress_records
+        if record.weight is not None
+    ]
+
+    return render(
+        request,
+        "accounts/client_progress.html",
+        {
+            "profile": profile,
+            "progress_records": progress_records,
+            "chart_labels": chart_labels,
+            "chart_weights": chart_weights,
         },
     )

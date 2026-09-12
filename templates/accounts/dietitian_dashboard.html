@@ -110,12 +110,23 @@
                                 </td>
 
                                 <td>
-                                    <a
-                                        href="{% url 'create_diet_plan' client.id %}"
-                                        class="btn btn-dark btn-sm"
-                                    >
-                                        Manage
-                                    </a>
+                                    <div class="d-flex gap-2">
+
+                                        <a
+                                            href="{% url 'create_diet_plan' client.id %}"
+                                            class="btn btn-dark btn-sm"
+                                        >
+                                            Diet Plan
+                                        </a>
+
+                                        <a
+                                            href="{% url 'add_progress' client.id %}"
+                                            class="btn btn-outline-dark btn-sm"
+                                        >
+                                            Progress
+                                        </a>
+
+                                    </div>
                                 </td>
 
                             </tr>
