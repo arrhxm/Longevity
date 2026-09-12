@@ -6,6 +6,8 @@ from nutrition.models import DietPlan, Meal
 from nutrition.forms import DietPlanForm, MealForm
 from progress.forms import ProgressRecordForm
 from progress.models import ProgressRecord
+from payments.forms import MembershipForm, PaymentForm
+from payments.models import Membership
 
 
 def login_view(request):
@@ -77,9 +79,14 @@ def dietitian_dashboard(request):
 
     from accounts.models import User
 
-    clients = User.objects.filter(
-        role="CLIENT"
-    ).order_by("first_name", "last_name")
+    clients = (
+        User.objects
+        .filter(role="CLIENT")
+        .prefetch_related(
+            "client_profile__memberships"
+        )
+        .order_by("first_name", "last_name")
+    )
 
     return render(
         request,
@@ -293,5 +300,84 @@ def client_progress(request):
             "progress_records": progress_records,
             "chart_labels": chart_labels,
             "chart_weights": chart_weights,
+        },
+    )
+def create_membership(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    client = ClientProfile.objects.get(
+        user_id=client_id
+    )
+
+    if request.method == "POST":
+        form = MembershipForm(request.POST)
+
+        if form.is_valid():
+            membership = form.save(commit=False)
+            membership.client = client
+            membership.save()
+
+            return redirect(
+                "dietitian_dashboard"
+            )
+
+    else:
+        form = MembershipForm()
+
+    return render(
+        request,
+        "accounts/create_membership.html",
+        {
+            "form": form,
+            "client": client,
+        },
+    )
+def add_payment(request, membership_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    membership = Membership.objects.get(
+        id=membership_id
+    )
+
+    if request.method == "POST":
+        form = PaymentForm(request.POST)
+
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.membership = membership
+            payment.save()
+
+            return redirect(
+                "add_payment",
+                membership_id=membership.id,
+            )
+
+    else:
+        form = PaymentForm()
+
+    total_paid = sum(
+        payment.amount
+        for payment in membership.payments.all()
+        if payment.status in ["PAID", "PARTIAL"]
+    )
+
+    amount_due = membership.amount - total_paid
+
+    return render(
+        request,
+        "accounts/add_payment.html",
+        {
+            "form": form,
+            "membership": membership,
+            "total_paid": total_paid,
+            "amount_due": amount_due,
         },
     )

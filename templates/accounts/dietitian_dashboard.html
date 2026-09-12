@@ -110,7 +110,7 @@
                                 </td>
 
                                 <td>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex gap-2 flex-wrap">
 
                                         <a
                                             href="{% url 'create_diet_plan' client.id %}"
@@ -124,6 +124,13 @@
                                             class="btn btn-outline-dark btn-sm"
                                         >
                                             Progress
+                                        </a>
+
+                                        <a
+                                            href="{% url 'create_membership' client.id %}"
+                                            class="btn btn-outline-dark btn-sm"
+                                        >
+                                            Membership
                                         </a>
 
                                     </div>

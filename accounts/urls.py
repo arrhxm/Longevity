@@ -3,11 +3,13 @@ from django.urls import path
 from .views import (
     admin_dashboard,
     add_meal,
+    add_payment,
     add_progress,
     client_dashboard,
     client_profile,
     client_progress,
     create_diet_plan,
+    create_membership,
     dashboard,
     dietitian_dashboard,
     login_view,
@@ -60,5 +62,10 @@ urlpatterns = [
         "progress/",
         client_progress,
         name="client_progress",
+    ),
+    path(
+        "dietitian/membership/<int:membership_id>/payment/add/",
+        add_payment,
+        name="add_payment",
     ),
 ]
