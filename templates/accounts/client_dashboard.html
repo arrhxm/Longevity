@@ -125,8 +125,177 @@
             </div>
 
         </div>
+    <div class="card border-0 shadow-sm mb-5">
 
+        <div class="card-body p-4 p-lg-5">
 
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <div>
+                    <h3 class="fw-bold mb-1">
+                        My Diet Plan
+                    </h3>
+
+                    <p class="text-secondary mb-0">
+                        Your current nutrition plan and meals.
+                    </p>
+                </div>
+
+            </div>
+
+            {% if active_diet_plan %}
+
+                <div class="mb-4">
+
+                    <h4 class="fw-bold">
+                        {{ active_diet_plan.name }}
+                    </h4>
+
+                    {% if active_diet_plan.description %}
+                        <p class="text-secondary">
+                            {{ active_diet_plan.description }}
+                        </p>
+                    {% endif %}
+
+                    <div class="row g-3 mt-2">
+
+                        <div class="col-md-4">
+                            <div class="bg-light rounded p-3">
+                                <small class="text-secondary">
+                                    Start Date
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ active_diet_plan.start_date }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="bg-light rounded p-3">
+                                <small class="text-secondary">
+                                    End Date
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ active_diet_plan.end_date|default:"Ongoing" }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="bg-light rounded p-3">
+                                <small class="text-secondary">
+                                    Calories / Day
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ active_diet_plan.calories_per_day|default:"Not specified" }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="fw-bold mb-4">
+                    Today's Meal Plan
+                </h5>
+
+                {% if active_diet_plan.meals.all %}
+
+                    <div class="row g-4">
+
+                        {% for meal in active_diet_plan.meals.all %}
+
+                            <div class="col-md-6">
+
+                                <div class="card h-100 border">
+
+                                    <div class="card-body p-4">
+
+                                        <span class="badge bg-dark mb-3">
+                                            {{ meal.get_meal_type_display }}
+                                        </span>
+
+                                        <h5 class="fw-bold">
+                                            {{ meal.name }}
+                                        </h5>
+
+                                        {% if meal.description %}
+                                            <p class="text-secondary">
+                                                {{ meal.description }}
+                                            </p>
+                                        {% endif %}
+
+                                        <div class="small text-secondary">
+
+                                            {% if meal.calories %}
+                                                <span class="me-3">
+                                                    {{ meal.calories }} kcal
+                                                </span>
+                                            {% endif %}
+
+                                            {% if meal.protein %}
+                                                <span class="me-3">
+                                                    Protein: {{ meal.protein }}g
+                                                </span>
+                                            {% endif %}
+
+                                            {% if meal.carbohydrates %}
+                                                <span class="me-3">
+                                                    Carbs: {{ meal.carbohydrates }}g
+                                                </span>
+                                            {% endif %}
+
+                                            {% if meal.fats %}
+                                                <span>
+                                                    Fat: {{ meal.fats }}g
+                                                </span>
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-light border">
+                        No meals have been added to your diet plan yet.
+                    </div>
+
+                {% endif %}
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <h5 class="fw-bold">
+                        No Active Diet Plan
+                    </h5>
+
+                    <p class="text-secondary mb-0">
+                        Your dietitian has not assigned an active diet plan yet.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
         <div class="col-md-6 col-lg-3">
 
             <div class="card border-0 shadow-sm h-100">

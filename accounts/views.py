@@ -2,6 +2,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render
 from clients.models import ClientProfile
 from .forms import ClientProfileForm
+from nutrition.models import DietPlan, Meal
+from nutrition.forms import DietPlanForm, MealForm
 
 
 def login_view(request):
@@ -71,7 +73,19 @@ def dietitian_dashboard(request):
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
 
-    return render(request, "accounts/dietitian_dashboard.html")
+    from accounts.models import User
+
+    clients = User.objects.filter(
+        role="CLIENT"
+    ).order_by("first_name", "last_name")
+
+    return render(
+        request,
+        "accounts/dietitian_dashboard.html",
+        {
+            "clients": clients,
+        },
+    )
 
 
 def client_dashboard(request):
@@ -85,11 +99,23 @@ def client_dashboard(request):
         user=request.user
     )
 
+    active_diet_plan = (
+        DietPlan.objects
+        .filter(
+            client=request.user,
+            is_active=True,
+        )
+        .prefetch_related("meals")
+        .order_by("-start_date")
+        .first()
+    )
+
     return render(
         request,
         "accounts/client_dashboard.html",
         {
             "profile": profile,
+            "active_diet_plan": active_diet_plan,
         },
     )
 def client_profile(request):
@@ -122,5 +148,74 @@ def client_profile(request):
         {
             "form": form,
             "profile": profile,
+        },
+    )
+def create_diet_plan(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    client = ClientProfile.objects.get(
+        user_id=client_id
+    )
+
+    if request.method == "POST":
+        form = DietPlanForm(request.POST)
+
+        if form.is_valid():
+            diet_plan = form.save(commit=False)
+            diet_plan.client = client.user
+            diet_plan.save()
+
+            return redirect(
+                "add_meal",diet_plan_id=diet_plan.id,
+            )
+
+    else:
+        form = DietPlanForm()
+
+    return render(
+        request,
+        "accounts/create_diet_plan.html",
+        {
+            "form": form,
+            "client": client,
+        },
+    )
+def add_meal(request, diet_plan_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    diet_plan = DietPlan.objects.get(
+        id=diet_plan_id
+    )
+
+    if request.method == "POST":
+        form = MealForm(request.POST)
+
+        if form.is_valid():
+            meal = form.save(commit=False)
+            meal.diet_plan = diet_plan
+            meal.save()
+
+            return redirect(
+                "add_meal",
+                diet_plan_id=diet_plan.id,
+            )
+
+    else:
+        form = MealForm()
+
+    return render(
+        request,
+        "accounts/add_meal.html",
+        {
+            "form": form,
+            "diet_plan": diet_plan,
         },
     )

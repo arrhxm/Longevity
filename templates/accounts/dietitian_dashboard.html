@@ -5,15 +5,149 @@
 {% block content %}
 
 <div class="container py-5">
-    <h1 class="fw-bold">Dietitian Dashboard</h1>
 
-    <p class="text-secondary">
-        Welcome, {{ request.user.get_full_name|default:request.user.username }}.
-    </p>
+    <div class="mb-5">
+        <h1 class="fw-bold">
+            Dietitian Dashboard
+        </h1>
 
-    <a href="/logout/" class="btn btn-dark">
-        Logout
-    </a>
+        <p class="text-secondary">
+            Manage your clients and their nutrition plans.
+        </p>
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Total Clients
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ clients|length }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Diet Plans
+                    </p>
+
+                    <h2 class="fw-bold">
+                        0
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Appointments
+                    </p>
+
+                    <h2 class="fw-bold">
+                        0
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Clients -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <h4 class="fw-bold mb-4">
+                My Clients
+            </h4>
+
+            {% if clients %}
+
+                <div class="table-responsive">
+
+                    <table class="table align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Email</th>
+                                <th>Username</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for client in clients %}
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        {{ client.get_full_name|default:client.username }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {{ client.email|default:"Not provided" }}
+                                </td>
+
+                                <td>
+                                    {{ client.username }}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{% url 'create_diet_plan' client.id %}"
+                                        class="btn btn-dark btn-sm"
+                                    >
+                                        Manage
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <h5 class="fw-bold">
+                        No clients yet
+                    </h5>
+
+                    <p class="text-secondary mb-0">
+                        Clients will appear here when they are registered.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}
