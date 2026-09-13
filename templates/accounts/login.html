@@ -32,19 +32,18 @@
                             {% csrf_token %}
 
                             <div class="mb-3">
-                                <label class="form-label">
-                                    Username
+                                <label for="identifier" class="form-label">
+                                    Username, Email or Phone
                                 </label>
 
                                 <input
                                     type="text"
-                                    name="username"
+                                    name="identifier"
+                                    id="identifier"
                                     class="form-control"
-                                    placeholder="Enter username"
+                                    placeholder="Enter username, email or phone"
                                     required
                                 >
-                            </div>
-
                             <div class="mb-4">
                                 <label class="form-label">
                                     Password
@@ -65,6 +64,14 @@
                             >
                                 Login
                             </button>
+                            <div class="text-center mt-3">
+                                <p class="mb-0">
+                                    New user?
+                                    <a href="{% url 'register' %}">
+                                        Register here
+                                    </a>
+                                </p>
+                            </div>
 
                         </form>
 

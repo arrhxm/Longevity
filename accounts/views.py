@@ -8,21 +8,54 @@ from progress.forms import ProgressRecordForm
 from progress.models import ProgressRecord
 from payments.forms import MembershipForm, PaymentForm
 from payments.models import Membership
-
+from decimal import Decimal
+from django.shortcuts import get_object_or_404 
+from .forms import ClientRegistrationForm
+import random
+from .models import User, RegistrationOTP
+from .forms import OTPRequestForm, CompleteRegistrationForm
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+        identifier = request.POST.get("identifier", "").strip()
+        password = request.POST.get("password", "")
 
         user = authenticate(
             request,
-            username=username,
+            username=identifier,
             password=password,
         )
+
+        # If username login failed, try email
+        if user is None:
+            from accounts.models import User
+
+            try:
+                user_obj = User.objects.get(email__iexact=identifier)
+                user = authenticate(
+                    request,
+                    username=user_obj.username,
+                    password=password,
+                )
+            except User.DoesNotExist:
+                pass
+
+        # If email login failed, try phone
+        if user is None:
+            from accounts.models import User
+
+            try:
+                user_obj = User.objects.get(phone=identifier)
+                user = authenticate(
+                    request,
+                    username=user_obj.username,
+                    password=password,
+                )
+            except User.DoesNotExist:
+                pass
 
         if user is not None:
             login(request, user)
@@ -32,7 +65,7 @@ def login_view(request):
             request,
             "accounts/login.html",
             {
-                "error": "Invalid username or password."
+                "error": "Invalid username, email, phone number, or password."
             },
         )
 
@@ -380,4 +413,224 @@ def add_payment(request, membership_id):
             "total_paid": total_paid,
             "amount_due": amount_due,
         },
+    )
+def client_memberships(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    client = get_object_or_404(ClientProfile, user_id=client_id)
+
+    memberships = list(
+        client.memberships
+        .prefetch_related("payments")
+        .order_by("-start_date")
+    )
+
+    for membership in memberships:
+        membership.total_paid = sum(
+            (
+                payment.amount
+                for payment in membership.payments.all()
+                if payment.status in ["PAID", "PARTIAL"]
+            ),
+            Decimal("0"),
+        )
+
+        membership.amount_due = membership.amount - membership.total_paid
+
+    return render(
+        request,
+        "accounts/client_memberships.html",
+        {
+            "client": client,
+            "memberships": memberships,
+        },
+    )
+def client_memberships_view(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "CLIENT":
+        return redirect("dashboard")
+
+    profile, created = ClientProfile.objects.get_or_create(
+        user=request.user
+    )
+
+    memberships = list(
+        profile.memberships
+        .prefetch_related("payments")
+        .order_by("-start_date")
+    )
+
+    for membership in memberships:
+        membership.total_paid = sum(
+            (
+                payment.amount
+                for payment in membership.payments.all()
+                if payment.status in ["PAID", "PARTIAL"]
+            ),
+            Decimal("0"),
+        )
+
+        membership.amount_due = membership.amount - membership.total_paid
+
+    return render(
+        request,
+        "accounts/client_memberships_view.html",
+        {
+            "profile": profile,
+            "memberships": memberships,
+        },
+    )
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = ClientRegistrationForm(request.POST)
+
+        if form.is_valid():
+            user = form.save()
+
+            login(request, user)
+
+            return redirect("client_dashboard")
+
+    else:
+        form = ClientRegistrationForm()
+
+    return render(
+        request,
+        "accounts/register.html",
+        {"form": form},
+    )
+
+
+def request_otp(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = OTPRequestForm(request.POST)
+
+        if form.is_valid():
+            phone = form.cleaned_data["phone"]
+
+            otp = str(random.randint(100000, 999999))
+
+            RegistrationOTP.objects.filter(phone=phone).delete()
+
+            RegistrationOTP.objects.create(
+                phone=phone,
+                otp=otp,
+            )
+
+            request.session["registration_data"] = {
+                "first_name": form.cleaned_data["first_name"],
+                "last_name": form.cleaned_data["last_name"],
+                "email": form.cleaned_data["email"],
+                "phone": phone,
+            }
+
+            print(f"Longevity+ OTP for {phone}: {otp}")
+
+            return redirect("verify_otp")
+
+    else:
+        form = OTPRequestForm()
+
+    return render(
+        request,
+        "accounts/register.html",
+        {"form": form},
+    )
+
+
+def verify_otp(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    registration_data = request.session.get("registration_data")
+
+    if not registration_data:
+        return redirect("register")
+
+    if request.method == "POST":
+        entered_otp = request.POST.get("otp", "").strip()
+
+        otp_record = (
+            RegistrationOTP.objects
+            .filter(phone=registration_data["phone"])
+            .order_by("-created_at")
+            .first()
+        )
+
+        if otp_record is None:
+            return render(
+                request,
+                "accounts/verify_otp.html",
+                {"error": "OTP expired or not found."},
+            )
+
+        if otp_record.otp != entered_otp:
+            otp_record.attempts += 1
+            otp_record.save(update_fields=["attempts"])
+
+            return render(
+                request,
+                "accounts/verify_otp.html",
+                {"error": "Invalid OTP. Please try again."},
+            )
+
+        # OTP verified
+        request.session["otp_verified"] = True
+
+        otp_record.delete()
+
+        return redirect("complete_registration")
+
+    return render(request, "accounts/verify_otp.html")
+def complete_registration(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    registration_data = request.session.get("registration_data")
+    otp_verified = request.session.get("otp_verified", False)
+
+    if not registration_data or not otp_verified:
+        return redirect("register")
+
+    if request.method == "POST":
+        form = CompleteRegistrationForm(request.POST)
+
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=registration_data["phone"],
+                email=registration_data["email"],
+                phone=registration_data["phone"],
+                first_name=registration_data["first_name"],
+                last_name=registration_data["last_name"],
+                password=form.cleaned_data["password"],
+                role=User.Role.CLIENT,
+            )
+
+            # Clear registration session data
+            request.session.pop("registration_data", None)
+            request.session.pop("otp_verified", None)
+
+            login(request, user)
+
+            return redirect("client_dashboard")
+
+    else:
+        form = CompleteRegistrationForm()
+
+    return render(
+        request,
+        "accounts/complete_registration.html",
+        {"form": form},
     )

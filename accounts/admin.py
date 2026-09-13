@@ -9,9 +9,7 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        ("Personal info", {
-            "fields": ("first_name", "last_name", "email")
-        }),
+        ("Personal info", {"fields": ("first_name", "last_name", "email", "phone")}),
         ("Longevity+ Information", {
             "fields": ("role",)
         }),
@@ -36,6 +34,8 @@ class CustomUserAdmin(UserAdmin):
                 "username",
                 "password1",
                 "password2",
+                "email",
+                "phone",
                 "role",
             ),
         }),
@@ -44,6 +44,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = (
         "username",
         "email",
+        "phone",
         "first_name",
         "last_name",
         "role",
@@ -53,6 +54,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = (
         "username",
         "email",
+        "phone",
         "first_name",
         "last_name",
     )

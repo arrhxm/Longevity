@@ -1,19 +1,24 @@
 from django.urls import path
 
 from .views import (
-    admin_dashboard,
-    add_meal,
-    add_payment,
-    add_progress,
-    client_dashboard,
-    client_profile,
-    client_progress,
-    create_diet_plan,
-    create_membership,
-    dashboard,
-    dietitian_dashboard,
     login_view,
     logout_view,
+    dashboard,
+    admin_dashboard,
+    dietitian_dashboard,
+    client_dashboard,
+    client_profile,
+    create_diet_plan,
+    add_meal,
+    add_progress,
+    client_progress,
+    create_membership,
+    add_payment,
+    client_memberships,
+    client_memberships_view,
+    request_otp,
+    verify_otp,
+    complete_registration,
 )
 
 urlpatterns = [
@@ -67,5 +72,38 @@ urlpatterns = [
         "dietitian/membership/<int:membership_id>/payment/add/",
         add_payment,
         name="add_payment",
+    ),
+    path(
+        "dietitian/client/<int:client_id>/membership/create/",
+        create_membership,
+        name="create_membership",
+    ),
+
+    path(
+        "dietitian/client/<int:client_id>/memberships/",
+        client_memberships,
+        name="client_memberships",
+    ),
+    path(
+        "my-memberships/",
+        client_memberships_view,
+        name="client_memberships_view",
+    ),
+    path(
+        "register/",
+        request_otp,
+        name="register",
+    ),
+
+    path(
+        "verify-otp/",
+        verify_otp,
+        name="verify_otp",
+    ),
+
+    path(
+        "complete-registration/",
+        complete_registration,
+        name="complete_registration",
     ),
 ]
