@@ -28,6 +28,8 @@ urlpatterns = [
     path("", home, name="home"),
 
     path("", include("accounts.urls")),
+
+    path("appointments/", include("appointments.urls")),
 ]
 
 if settings.DEBUG:

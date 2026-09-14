@@ -42,8 +42,8 @@
                     </p>
 
                     <h2 class="fw-bold">
-                        0
-                    </h2>
+                        {{ diet_plan_count }}
+                    </h2>   
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     </p>
 
                     <h2 class="fw-bold">
-                        0
+                        {{ appointment_count }}
                     </h2>
                 </div>
             </div>
@@ -84,7 +84,9 @@
                             <tr>
                                 <th>Client</th>
                                 <th>Email</th>
-                                <th>Username</th>
+                                <th>Current Weight</th>
+                                <th>Goal Weight</th>
+                                <th>Health Goal</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -106,11 +108,26 @@
                                 </td>
 
                                 <td>
-                                    {{ client.username }}
+                                    {{ client.client_profile.current_weight|default:"--" }} kg
                                 </td>
 
                                 <td>
-                                    <div class="d-flex gap-2 flex-wrap">
+                                    {{ client.client_profile.goal_weight|default:"--" }} kg
+                                </td>
+
+                                <td>
+                                    {{ client.client_profile.health_goal|default:"Not provided" }}
+                                </td>
+
+                                <td>
+                                    <div class="d-flex gap-2 flex-nowrap">
+
+                                        <a
+                                            href="{% url 'client_details' client.id %}"
+                                            class="btn btn-outline-dark btn-sm"
+                                        >
+                                            View
+                                        </a>
 
                                         <a
                                             href="{% url 'create_diet_plan' client.id %}"
@@ -126,9 +143,18 @@
                                             Progress
                                         </a>
 
-                                        <a href="{% url 'client_memberships' client.id %}"
-                                        class="btn btn-outline-dark btn-sm">
+                                        <a
+                                            href="{% url 'client_memberships' client.id %}"
+                                            class="btn btn-outline-dark btn-sm"
+                                        >
                                             Membership
+                                        </a>
+
+                                        <a
+                                            href="{% url 'create_appointment' client.id %}"
+                                            class="btn btn-outline-dark btn-sm"
+                                        >
+                                            Appointment
                                         </a>
 
                                     </div>

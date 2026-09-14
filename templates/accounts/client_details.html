@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Client Details | Longevity+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                {{ client.user.get_full_name|default:client.user.username }}
+            </h2>
+            <p class="text-muted mb-0">
+                Client Profile
+            </p>
+        </div>
+
+        <a href="{% url 'dietitian_dashboard' %}"
+           class="btn btn-outline-dark">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+
+    <!-- Client Information -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">Personal Information</h5>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <small class="text-muted">Name</small>
+                    <div class="fw-semibold">
+                        {{ client.user.get_full_name|default:client.user.username }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Email</small>
+                    <div class="fw-semibold">
+                        {{ client.user.email|default:"Not provided" }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Phone</small>
+                    <div class="fw-semibold">
+                        {{ client.phone|default:client.user.phone|default:"Not provided" }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Date of Birth</small>
+                    <div class="fw-semibold">
+                        {{ client.date_of_birth|default:"Not provided" }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Health Information -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">Health Information</h5>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <small class="text-muted">Height</small>
+                    <div class="fw-semibold">
+                        {% if client.height %}
+                            {{ client.height }} cm
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Current Weight</small>
+                    <div class="fw-semibold">
+                        {% if client.current_weight %}
+                            {{ client.current_weight }} kg
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Goal Weight</small>
+                    <div class="fw-semibold">
+                        {% if client.goal_weight %}
+                            {{ client.goal_weight }} kg
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Health Goal</small>
+                    <div class="fw-semibold">
+                        {{ client.health_goal|default:"Not provided" }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Medical Notes</small>
+                    <div class="fw-semibold">
+                        {{ client.medical_notes|default:"None" }}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Diet Plans -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Diet Plans</h5>
+
+            {% if diet_plans %}
+                {% for plan in diet_plans %}
+                    <div class="border rounded-3 p-3 mb-3">
+
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ plan.name }}</strong>
+
+                            {% if plan.is_active %}
+                                <span class="badge bg-dark">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+
+                        <small class="text-muted">
+                            {{ plan.start_date }}
+                        </small>
+
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">
+                    No diet plans assigned.
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <!-- Progress -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Progress Records</h5>
+
+            {% if progress_records %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Weight</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in progress_records %}
+                                <tr>
+                                    <td>{{ record.date }}</td>
+                                    <td>{{ record.weight }} kg</td>
+                                    <td>{{ record.notes|default:"--" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">
+                    No progress records available.
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <!-- Memberships -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Memberships</h5>
+
+            {% if memberships %}
+                {% for membership in memberships %}
+
+                    <div class="border rounded-3 p-3 mb-3">
+
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ membership.name }}</strong>
+
+                            <span>
+                                {{ membership.status }}
+                            </span>
+                        </div>
+
+                        <div class="text-muted small mt-2">
+                            {{ membership.start_date }}
+                            →
+                            {{ membership.end_date }}
+                        </div>
+
+                        <div class="mt-2">
+                            ₹{{ membership.amount }}
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">
+                    No memberships found.
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <!-- Appointments -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Appointments</h5>
+
+            {% if appointments %}
+                {% for appointment in appointments %}
+
+                    <div class="border rounded-3 p-3 mb-3">
+
+                        <div class="d-flex justify-content-between">
+                            <strong>
+                                {{ appointment.date }}
+                                at
+                                {{ appointment.time }}
+                            </strong>
+
+                            <span>
+                                {{ appointment.status }}
+                            </span>
+                        </div>
+
+                        {% if appointment.reason %}
+                            <div class="mt-2">
+                                {{ appointment.reason }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">
+                    No appointments found.
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

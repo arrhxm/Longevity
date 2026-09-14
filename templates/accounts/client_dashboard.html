@@ -5,6 +5,19 @@
 {% block content %}
 
 <div class="container py-5">
+    {% if not profile_complete %}
+        <div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <strong>Complete your profile</strong>
+                <br>
+                <small>Add your health and body information to get started.</small>
+            </div>
+
+            <a href="{% url 'client_profile' %}" class="btn btn-dark btn-sm">
+                Complete Profile
+            </a>
+        </div>
+    {% endif %}
 
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-5">
@@ -331,20 +344,40 @@
                         Membership
                     </p>
 
-                    <h5 class="fw-bold mb-1">
-                        No active plan
-                    </h5>
+                    
+                    {% if active_membership %}
+                        <h5 class="fw-bold mb-1">
+                            {{ active_membership.name }}
+                        </h5>
 
-                    <small class="text-secondary">
-                        Membership status
-                    </small>
+                        <div class="fw-semibold mb-1">
+                            ₹{{ active_membership.amount }}
+                        </div>
+
+                        <small class="text-success">
+                            {{ active_membership.get_status_display }}
+                        </small>
+
+                        <br>
+
+                        <small class="text-secondary">
+                            Valid until {{ active_membership.end_date }}
+                        </small>
+                    {% else %}
+                        <h5 class="fw-bold mb-1">
+                            No active plan
+                        </h5>
+
+                        <small class="text-secondary">
+                            Membership status
+                        </small>
+                    {% endif %}
 
                 </div>
 
             </div>
 
         </div>
-
 
         <div class="col-md-6 col-lg-3">
 
@@ -356,13 +389,34 @@
                         Next Appointment
                     </p>
 
-                    <h5 class="fw-bold mb-1">
-                        No appointment
-                    </h5>
+                    {% if next_appointment %}
+                        <h5 class="fw-bold mb-1">
+                            {{ next_appointment.date }}
+                        </h5>
 
-                    <small class="text-secondary">
-                        Upcoming consultation
-                    </small>
+                        <div class="fw-semibold mb-1">
+                            {{ next_appointment.time }}
+                        </div>
+
+                        <small class="text-success">
+                            {{ next_appointment.get_status_display }}
+                        </small>
+
+                        {% if next_appointment.reason %}
+                            <br>
+                            <small class="text-secondary">
+                                {{ next_appointment.reason }}
+                            </small>
+                        {% endif %}
+                    {% else %}
+                        <h5 class="fw-bold mb-1">
+                            No appointment
+                        </h5>
+
+                        <small class="text-secondary">
+                            Upcoming consultation
+                        </small>
+                    {% endif %}
 
                 </div>
 
@@ -376,81 +430,60 @@
     <!-- Main Dashboard -->
     <div class="row g-4">
 
-        <!-- Diet Plan -->
-        <div class="col-lg-8">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-
-                        <div>
-                            <p class="text-secondary mb-1">
-                                Nutrition
-                            </p>
-
-                            <h4 class="fw-bold mb-0">
-                                My Diet Plan
-                            </h4>
-                        </div>
-
-                        <span class="badge text-bg-light">
-                            No active plan
-                        </span>
-
-                    </div>
-
-                    <div class="text-center py-5">
-
-                        <div class="display-5 mb-3">
-                            🥗
-                        </div>
-
-                        <h5 class="fw-bold">
-                            Your personalized diet plan will appear here
-                        </h5>
-
-                        <p class="text-secondary">
-                            Your dietitian will create and assign your
-                            personalized nutrition plan.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
         <!-- Notifications -->
         <div class="col-lg-4">
 
             <div class="card border-0 shadow-sm h-100">
 
-                <div class="card-body p-4">
+                    {% if notifications %}
 
-                    <p class="text-secondary mb-1">
-                        Updates
-                    </p>
+                        {% for notification in notifications %}
 
-                    <h4 class="fw-bold mb-4">
-                        Notifications
-                    </h4>
+                            <div class="border-bottom py-3">
 
-                    <div class="text-center py-4">
+                                <div class="d-flex justify-content-between align-items-start">
 
-                        <div class="display-6 mb-3">
-                            🔔
-                        </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">
+                                            {{ notification.title }}
+                                        </h6>
 
-                        <p class="text-secondary mb-0">
-                            No new notifications
-                        </p>
+                                        <p class="text-secondary small mb-1">
+                                            {{ notification.message }}
+                                        </p>
 
-                    </div>
+                                        <small class="text-muted">
+                                            {{ notification.created_at|date:"d M Y, h:i A" }}
+                                        </small>
+                                    </div>
+
+                                    {% if not notification.is_read %}
+                                        <span class="badge text-bg-dark">
+                                            New
+                                        </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+    <div class="text-center py-4">
+
+        <div class="display-6 mb-3">
+            🔔
+        </div>
+
+        <p class="text-secondary mb-0">
+            No new notifications
+        </p>
+
+    </div>
+
+{% endif %}
 
                 </div>
 
@@ -529,7 +562,7 @@
 
             <div class="col-md-6 col-lg-3">
 
-                <a href="#" class="text-decoration-none text-dark">
+                <a href="{% url 'client_memberships_view' %}" class="text-decoration-none text-dark">
 
                     <div class="card border-0 shadow-sm h-100">
 
@@ -558,7 +591,7 @@
 
             <div class="col-md-6 col-lg-3">
 
-                <a href="#" class="text-decoration-none text-dark">
+                <a href="{% url 'client_appointments' %}" class="text-decoration-none text-dark">
 
                     <div class="card border-0 shadow-sm h-100">
 

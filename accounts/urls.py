@@ -19,6 +19,7 @@ from .views import (
     request_otp,
     verify_otp,
     complete_registration,
+    client_details, 
 )
 
 urlpatterns = [
@@ -105,5 +106,10 @@ urlpatterns = [
         "complete-registration/",
         complete_registration,
         name="complete_registration",
+    ),
+    path(
+        "dietitian/client/<int:client_id>/",
+        client_details,
+        name="client_details",
     ),
 ]

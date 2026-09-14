@@ -1,7 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect, render
 from clients.models import ClientProfile
-from .forms import ClientProfileForm
 from nutrition.models import DietPlan, Meal
 from nutrition.forms import DietPlanForm, MealForm
 from progress.forms import ProgressRecordForm
@@ -10,10 +9,11 @@ from payments.forms import MembershipForm, PaymentForm
 from payments.models import Membership
 from decimal import Decimal
 from django.shortcuts import get_object_or_404 
-from .forms import ClientRegistrationForm
 import random
 from .models import User, RegistrationOTP
-from .forms import OTPRequestForm, CompleteRegistrationForm
+from .forms import OTPRequestForm, CompleteRegistrationForm,ClientProfileForm
+from appointments.models import Appointment
+from notifications.models import Notification
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -59,7 +59,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("dashboard")
+            return redirect("client_profile")
 
         return render(
             request,
@@ -121,11 +121,64 @@ def dietitian_dashboard(request):
         .order_by("first_name", "last_name")
     )
 
+    diet_plan_count = DietPlan.objects.filter(
+        is_active=True).count()
+
+    appointment_count = Appointment.objects.filter(
+        status=Appointment.Status.SCHEDULED).count()
+
     return render(
         request,
         "accounts/dietitian_dashboard.html",
         {
             "clients": clients,
+            "diet_plan_count": diet_plan_count,
+            "appointment_count": appointment_count,
+        },
+    )
+def client_details(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    client = get_object_or_404(ClientProfile, user_id=client_id)
+
+    diet_plans = (
+        DietPlan.objects
+        .filter(client=client.user)
+        .prefetch_related("meals")
+        .order_by("-start_date")
+    )
+
+    progress_records = (
+        ProgressRecord.objects
+        .filter(client=client)
+        .order_by("-date")
+    )
+
+    memberships = (
+        Membership.objects
+        .filter(client=client)
+        .order_by("-start_date")
+    )
+
+    appointments = (
+        Appointment.objects
+        .filter(client=client)
+        .order_by("-date", "-time")
+    )
+
+    return render(
+        request,
+        "accounts/client_details.html",
+        {
+            "client": client,
+            "diet_plans": diet_plans,
+            "progress_records": progress_records,
+            "memberships": memberships,
+            "appointments": appointments,
         },
     )
 
@@ -140,6 +193,13 @@ def client_dashboard(request):
     profile, created = ClientProfile.objects.get_or_create(
         user=request.user
     )
+    profile_complete = all([
+    profile.date_of_birth,
+    profile.height,
+    profile.current_weight,
+    profile.goal_weight,
+    profile.health_goal,
+    ])
 
     active_diet_plan = (
         DietPlan.objects
@@ -151,6 +211,30 @@ def client_dashboard(request):
         .order_by("-start_date")
         .first()
     )
+    active_membership = (
+    Membership.objects
+    .filter(
+        client=profile,
+        status=Membership.Status.ACTIVE,
+    )
+    .order_by("-start_date")
+    .first()
+    )
+
+    next_appointment = (
+    Appointment.objects
+    .filter(
+        client=profile,
+        status=Appointment.Status.SCHEDULED,
+    )
+    .order_by("date", "time")
+    .first()
+    )
+    notifications = (
+        Notification.objects
+        .filter(user=request.user)
+        .order_by("-created_at")[:5]
+    )
 
     return render(
         request,
@@ -158,6 +242,10 @@ def client_dashboard(request):
         {
             "profile": profile,
             "active_diet_plan": active_diet_plan,
+            "active_membership": active_membership,
+            "next_appointment": next_appointment,
+            "profile_complete": profile_complete,
+            "notifications": notifications,
         },
     )
 def client_profile(request):
@@ -211,21 +299,16 @@ def create_diet_plan(request, client_id):
             diet_plan.client = client.user
             diet_plan.save()
 
-            return redirect(
-                "add_meal",diet_plan_id=diet_plan.id,
+            Notification.objects.create(
+                user=client.user,
+                notification_type=Notification.NotificationType.DIET_PLAN,
+                title="New Diet Plan Assigned",
+                message=f"Your dietitian has assigned you a new diet plan: {diet_plan.name}.",
             )
 
-    else:
-        form = DietPlanForm()
-
-    return render(
-        request,
-        "accounts/create_diet_plan.html",
-        {
-            "form": form,
-            "client": client,
-        },
-    )
+            return redirect(
+                "add_meal", diet_plan_id=diet_plan.id,
+            )
 def add_meal(request, diet_plan_id):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -486,28 +569,7 @@ def client_memberships_view(request):
             "memberships": memberships,
         },
     )
-def register_view(request):
-    if request.user.is_authenticated:
-        return redirect("dashboard")
 
-    if request.method == "POST":
-        form = ClientRegistrationForm(request.POST)
-
-        if form.is_valid():
-            user = form.save()
-
-            login(request, user)
-
-            return redirect("client_dashboard")
-
-    else:
-        form = ClientRegistrationForm()
-
-    return render(
-        request,
-        "accounts/register.html",
-        {"form": form},
-    )
 
 
 def request_otp(request):
