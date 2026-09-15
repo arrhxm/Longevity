@@ -16,10 +16,12 @@ from .views import (
     add_payment,
     client_memberships,
     client_memberships_view,
+    revenue_report,
     request_otp,
     verify_otp,
     complete_registration,
-    client_details, 
+    client_details,
+    edit_client_profile,
 )
 
 urlpatterns = [
@@ -91,6 +93,11 @@ urlpatterns = [
         name="client_memberships_view",
     ),
     path(
+        "dietitian/revenue/",
+        revenue_report,
+        name="revenue_report",
+    ),
+    path(
         "register/",
         request_otp,
         name="register",
@@ -111,5 +118,10 @@ urlpatterns = [
         "dietitian/client/<int:client_id>/",
         client_details,
         name="client_details",
+    ),
+    path(
+        "dietitian/client/<int:client_id>/edit/",
+        edit_client_profile,
+        name="edit_client_profile",
     ),
 ]

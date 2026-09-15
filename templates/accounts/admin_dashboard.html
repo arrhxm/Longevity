@@ -5,15 +5,205 @@
 {% block content %}
 
 <div class="container py-5">
-    <h1 class="fw-bold">Admin Dashboard</h1>
 
-    <p class="text-secondary">
-        Welcome, {{ request.user.get_full_name|default:request.user.username }}.
-    </p>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-5">
+        <div>
+            <h1 class="fw-bold">
+                Admin Dashboard
+            </h1>
 
-    <a href="/logout/" class="btn btn-dark">
-        Logout
-    </a>
+            <p class="text-secondary mb-0">
+                Welcome, {{ request.user.get_full_name|default:request.user.username }}.
+                Here's what's happening across Longevity+.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/admin/" class="btn btn-outline-dark">
+                Django Admin
+            </a>
+
+            <a href="/logout/" class="btn btn-dark">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Clients
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ client_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Dietitians
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ dietitian_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Active Memberships
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ active_membership_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Active Diet Plans
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ active_diet_plan_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Upcoming Appointments
+                    </p>
+
+                    <h2 class="fw-bold">
+                        {{ upcoming_appointment_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">
+                        Revenue Collected
+                    </p>
+
+                    <h2 class="fw-bold">
+                        ₹{{ total_revenue|floatformat:2 }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Recent clients -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-3">
+                        Recently Joined Clients
+                    </h5>
+
+                    {% if recent_clients %}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <tbody>
+                                    {% for client in recent_clients %}
+                                        <tr>
+                                            <td>
+                                                {{ client.get_full_name|default:client.username }}
+                                            </td>
+
+                                            <td class="text-secondary small">
+                                                {{ client.email|default:client.phone }}
+                                            </td>
+
+                                            <td class="text-secondary small text-end">
+                                                {{ client.date_joined|date:"d M Y" }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">
+                            No clients yet.
+                        </p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming appointments -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-3">
+                        Upcoming Appointments
+                    </h5>
+
+                    {% if upcoming_appointments %}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <tbody>
+                                    {% for appointment in upcoming_appointments %}
+                                        <tr>
+                                            <td>
+                                                {{ appointment.client.user.get_full_name|default:appointment.client.user.username }}
+                                            </td>
+
+                                            <td class="text-secondary small">
+                                                {{ appointment.date|date:"d M Y" }} at {{ appointment.time|time:"h:i A" }}
+                                            </td>
+
+                                            <td class="text-secondary small text-end">
+                                                {{ appointment.reason|default:"—" }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">
+                            No upcoming appointments.
+                        </p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}

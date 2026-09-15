@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.db.models import Sum
 from django.shortcuts import redirect, render
 from clients.models import ClientProfile
 from nutrition.models import DietPlan, Meal
@@ -6,7 +7,7 @@ from nutrition.forms import DietPlanForm, MealForm
 from progress.forms import ProgressRecordForm
 from progress.models import ProgressRecord
 from payments.forms import MembershipForm, PaymentForm
-from payments.models import Membership
+from payments.models import Membership, Payment
 from decimal import Decimal
 from django.shortcuts import get_object_or_404 
 import random
@@ -59,7 +60,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("client_profile")
+            return redirect("dashboard")
 
         return render(
             request,
@@ -100,7 +101,57 @@ def admin_dashboard(request):
     if not (request.user.is_superuser or request.user.role == "ADMIN"):
         return redirect("dashboard")
 
-    return render(request, "accounts/admin_dashboard.html")
+    from accounts.models import User
+
+    client_count = User.objects.filter(role="CLIENT").count()
+    dietitian_count = User.objects.filter(role="DIETITIAN").count()
+
+    active_membership_count = Membership.objects.filter(
+        status=Membership.Status.ACTIVE
+    ).count()
+
+    total_revenue = (
+        Payment.objects
+        .filter(status=Payment.Status.PAID)
+        .aggregate(total=Sum("amount"))
+        .get("total") or Decimal("0")
+    )
+
+    upcoming_appointment_count = Appointment.objects.filter(
+        status=Appointment.Status.SCHEDULED
+    ).count()
+
+    active_diet_plan_count = DietPlan.objects.filter(
+        is_active=True
+    ).count()
+
+    recent_clients = (
+        User.objects
+        .filter(role="CLIENT")
+        .order_by("-date_joined")[:5]
+    )
+
+    upcoming_appointments = (
+        Appointment.objects
+        .filter(status=Appointment.Status.SCHEDULED)
+        .select_related("client")
+        .order_by("date", "time")[:5]
+    )
+
+    return render(
+        request,
+        "accounts/admin_dashboard.html",
+        {
+            "client_count": client_count,
+            "dietitian_count": dietitian_count,
+            "active_membership_count": active_membership_count,
+            "total_revenue": total_revenue,
+            "upcoming_appointment_count": upcoming_appointment_count,
+            "active_diet_plan_count": active_diet_plan_count,
+            "recent_clients": recent_clients,
+            "upcoming_appointments": upcoming_appointments,
+        },
+    )
 
 
 def dietitian_dashboard(request):
@@ -179,6 +230,33 @@ def client_details(request, client_id):
             "progress_records": progress_records,
             "memberships": memberships,
             "appointments": appointments,
+        },
+    )
+def edit_client_profile(request, client_id):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    profile = get_object_or_404(ClientProfile, user_id=client_id)
+
+    if request.method == "POST":
+        form = ClientProfileForm(request.POST, instance=profile)
+
+        if form.is_valid():
+            form.save()
+            return redirect("client_details", client_id=client_id)
+
+    else:
+        form = ClientProfileForm(instance=profile)
+
+    return render(
+        request,
+        "accounts/edit_client_profile.html",
+        {
+            "form": form,
+            "client": profile,
         },
     )
 
@@ -309,6 +387,19 @@ def create_diet_plan(request, client_id):
             return redirect(
                 "add_meal", diet_plan_id=diet_plan.id,
             )
+    else:
+        form = DietPlanForm()
+
+    return render(
+        request,
+        "accounts/create_diet_plan.html",
+        {
+            "form": form,
+            "client": client,
+        },
+    )
+
+
 def add_meal(request, diet_plan_id):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -365,7 +456,7 @@ def add_progress(request, client_id):
 
             return redirect(
                 "add_progress",
-                client_id=client.id,
+                client_id=client.user_id,
             )
 
     else:
@@ -512,17 +603,24 @@ def client_memberships(request, client_id):
         .order_by("-start_date")
     )
 
+    client_total_paid = Decimal("0")
+
     for membership in memberships:
+        membership.payment_list = membership.payments.all().order_by(
+            "-payment_date"
+        )
+
         membership.total_paid = sum(
             (
                 payment.amount
-                for payment in membership.payments.all()
+                for payment in membership.payment_list
                 if payment.status in ["PAID", "PARTIAL"]
             ),
             Decimal("0"),
         )
 
         membership.amount_due = membership.amount - membership.total_paid
+        client_total_paid += membership.total_paid
 
     return render(
         request,
@@ -530,6 +628,102 @@ def client_memberships(request, client_id):
         {
             "client": client,
             "memberships": memberships,
+            "client_total_paid": client_total_paid,
+        },
+    )
+
+
+def revenue_report(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    if request.user.role != "DIETITIAN":
+        return redirect("dashboard")
+
+    from django.db.models.functions import TruncMonth, TruncQuarter, TruncYear
+    from django.utils import timezone
+
+    paid_payments = Payment.objects.filter(status=Payment.Status.PAID)
+
+    today = timezone.localdate()
+
+    current_month_revenue = paid_payments.filter(
+        payment_date__year=today.year,
+        payment_date__month=today.month,
+    ).aggregate(total=Sum("amount")).get("total") or Decimal("0")
+
+    current_quarter = (today.month - 1) // 3 + 1
+    quarter_start_month = 3 * (current_quarter - 1) + 1
+    quarter_end_month = quarter_start_month + 2
+
+    current_quarter_revenue = paid_payments.filter(
+        payment_date__year=today.year,
+        payment_date__month__gte=quarter_start_month,
+        payment_date__month__lte=quarter_end_month,
+    ).aggregate(total=Sum("amount")).get("total") or Decimal("0")
+
+    current_year_revenue = paid_payments.filter(
+        payment_date__year=today.year,
+    ).aggregate(total=Sum("amount")).get("total") or Decimal("0")
+
+    total_revenue = paid_payments.aggregate(
+        total=Sum("amount")
+    ).get("total") or Decimal("0")
+
+    monthly_revenue_qs = (
+        paid_payments
+        .annotate(period=TruncMonth("payment_date"))
+        .values("period")
+        .annotate(total=Sum("amount"))
+        .order_by("-period")[:12]
+    )
+
+    monthly_revenue = [
+        {"label": row["period"].strftime("%B %Y"), "total": row["total"]}
+        for row in monthly_revenue_qs
+    ]
+
+    quarterly_revenue_qs = (
+        paid_payments
+        .annotate(period=TruncQuarter("payment_date"))
+        .values("period")
+        .annotate(total=Sum("amount"))
+        .order_by("-period")[:8]
+    )
+
+    quarterly_revenue = [
+        {
+            "label": f"Q{((row['period'].month - 1) // 3) + 1} {row['period'].year}",
+            "total": row["total"],
+        }
+        for row in quarterly_revenue_qs
+    ]
+
+    yearly_revenue_qs = (
+        paid_payments
+        .annotate(period=TruncYear("payment_date"))
+        .values("period")
+        .annotate(total=Sum("amount"))
+        .order_by("-period")
+    )
+
+    yearly_revenue = [
+        {"label": str(row["period"].year), "total": row["total"]}
+        for row in yearly_revenue_qs
+    ]
+
+    return render(
+        request,
+        "accounts/revenue_report.html",
+        {
+            "current_month_revenue": current_month_revenue,
+            "current_quarter_revenue": current_quarter_revenue,
+            "current_quarter": current_quarter,
+            "current_year_revenue": current_year_revenue,
+            "total_revenue": total_revenue,
+            "monthly_revenue": monthly_revenue,
+            "quarterly_revenue": quarterly_revenue,
+            "yearly_revenue": yearly_revenue,
         },
     )
 def client_memberships_view(request):

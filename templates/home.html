@@ -221,6 +221,95 @@
 </section>
 
 
+{% if success_stories %}
+<!-- Success Stories -->
+<section id="success-stories" class="py-5 bg-light">
+
+    <div class="container py-5">
+
+        <div class="text-center mb-5">
+
+            <span class="text-secondary">
+                REAL RESULTS
+            </span>
+
+            <h2 class="display-6 fw-bold mt-2">
+                Success stories from our clients
+            </h2>
+
+        </div>
+
+        <div class="row g-4">
+
+            {% for story in success_stories %}
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+
+                        {% if story.before_image and story.after_image %}
+                            <div class="row g-0">
+                                <div class="col-6">
+                                    <img
+                                        src="{{ story.before_image.url }}"
+                                        alt="{{ story.display_name }} before"
+                                        class="w-100 h-100"
+                                        style="object-fit: cover;"
+                                    >
+                                </div>
+                                <div class="col-6">
+                                    <img
+                                        src="{{ story.after_image.url }}"
+                                        alt="{{ story.display_name }} after"
+                                        class="w-100 h-100"
+                                        style="object-fit: cover;"
+                                    >
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body p-4">
+
+                            <h4 class="fw-bold">
+                                {{ story.title }}
+                            </h4>
+
+                            {% if story.duration or story.starting_weight and story.final_weight %}
+                                <p class="text-secondary small mb-2">
+                                    {% if story.starting_weight and story.final_weight %}
+                                        {{ story.starting_weight }} kg &rarr; {{ story.final_weight }} kg
+                                    {% endif %}
+                                    {% if story.duration %}
+                                        &middot; {{ story.duration }}
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+
+                            {% if story.review %}
+                                <p class="text-secondary">
+                                    "{{ story.review }}"
+                                </p>
+                            {% elif story.description %}
+                                <p class="text-secondary">
+                                    {{ story.description }}
+                                </p>
+                            {% endif %}
+
+                            <p class="fw-bold mb-0 mt-3">
+                                &mdash; {{ story.display_name }}
+                            </p>
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</section>
+{% endif %}
+
+
 <!-- CTA -->
 <section class="py-5 bg-dark text-white">
 
