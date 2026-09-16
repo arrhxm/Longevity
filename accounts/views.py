@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Sum
+from django.core.paginator import Paginator
+from django.db.models import Q, Sum
 from django.shortcuts import redirect, render
 from clients.models import ClientProfile
 from nutrition.models import DietPlan, Meal
@@ -102,6 +103,10 @@ def admin_dashboard(request):
         return redirect("dashboard")
 
     from accounts.models import User
+    from payments.services import sync_membership_statuses
+
+    sync_membership_statuses()
+
 
     client_count = User.objects.filter(role="CLIENT").count()
     dietitian_count = User.objects.filter(role="DIETITIAN").count()
@@ -162,8 +167,11 @@ def dietitian_dashboard(request):
         return redirect("dashboard")
 
     from accounts.models import User
+    from payments.services import sync_membership_statuses
 
-    clients = (
+    sync_membership_statuses()
+
+    clients_qs = (
         User.objects
         .filter(role="CLIENT")
         .prefetch_related(
@@ -171,6 +179,20 @@ def dietitian_dashboard(request):
         )
         .order_by("first_name", "last_name")
     )
+
+    search_query = request.GET.get("q", "").strip()
+
+    if search_query:
+        clients_qs = clients_qs.filter(
+            Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
+            | Q(username__icontains=search_query)
+            | Q(email__icontains=search_query)
+        )
+
+    paginator = Paginator(clients_qs, 10)
+    page_number = request.GET.get("page")
+    clients = paginator.get_page(page_number)
 
     diet_plan_count = DietPlan.objects.filter(
         is_active=True).count()
@@ -185,6 +207,7 @@ def dietitian_dashboard(request):
             "clients": clients,
             "diet_plan_count": diet_plan_count,
             "appointment_count": appointment_count,
+            "search_query": search_query,
         },
     )
 def client_details(request, client_id):
@@ -365,7 +388,7 @@ def create_diet_plan(request, client_id):
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
 
-    client = ClientProfile.objects.get(
+    client, _ = ClientProfile.objects.get_or_create(
         user_id=client_id
     )
 
@@ -442,7 +465,7 @@ def add_progress(request, client_id):
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
 
-    client = ClientProfile.objects.get(
+    client, _ = ClientProfile.objects.get_or_create(
         user_id=client_id
     )
 
@@ -453,6 +476,16 @@ def add_progress(request, client_id):
             progress = form.save(commit=False)
             progress.client = client
             progress.save()
+
+            Notification.objects.create(
+                user=client.user,
+                notification_type=Notification.NotificationType.PROGRESS,
+                title="New Progress Update",
+                message=(
+                    f"Your dietitian logged a new progress record for "
+                    f"{progress.date}."
+                ),
+            )
 
             return redirect(
                 "add_progress",
@@ -516,7 +549,7 @@ def create_membership(request, client_id):
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
 
-    client = ClientProfile.objects.get(
+    client, _ = ClientProfile.objects.get_or_create(
         user_id=client_id
     )
 
@@ -562,6 +595,33 @@ def add_payment(request, membership_id):
             payment.membership = membership
             payment.save()
 
+            if payment.status == Payment.Status.PAID:
+                title = "Payment Received"
+                message = (
+                    f"We've received your payment of ₹{payment.amount} "
+                    f"for '{membership.name}'. Thank you!"
+                )
+            elif payment.status == Payment.Status.PARTIAL:
+                title = "Partial Payment Received"
+                message = (
+                    f"We've received a partial payment of "
+                    f"₹{payment.amount} for '{membership.name}'. "
+                    f"A balance is still due."
+                )
+            else:
+                title = "Payment Recorded"
+                message = (
+                    f"A payment of ₹{payment.amount} for "
+                    f"'{membership.name}' has been recorded as pending."
+                )
+
+            Notification.objects.create(
+                user=membership.client.user,
+                notification_type=Notification.NotificationType.PAYMENT_RECEIVED,
+                title=title,
+                message=message,
+            )
+
             return redirect(
                 "add_payment",
                 membership_id=membership.id,
@@ -594,6 +654,10 @@ def client_memberships(request, client_id):
 
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
+
+    from payments.services import sync_membership_statuses
+
+    sync_membership_statuses()
 
     client = get_object_or_404(ClientProfile, user_id=client_id)
 
@@ -732,6 +796,10 @@ def client_memberships_view(request):
 
     if request.user.role != "CLIENT":
         return redirect("dashboard")
+
+    from payments.services import sync_membership_statuses
+
+    sync_membership_statuses()
 
     profile, created = ClientProfile.objects.get_or_create(
         user=request.user

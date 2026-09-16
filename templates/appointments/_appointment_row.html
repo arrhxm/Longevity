@@ -1,0 +1,53 @@
+<tr>
+    <td>
+        {{ appointment.client.user.get_full_name|default:appointment.client.user.username }}
+    </td>
+    <td>{{ appointment.date }}</td>
+    <td>{{ appointment.time }}</td>
+    <td class="text-secondary small">
+        {{ appointment.reason|default:"—" }}
+    </td>
+    <td class="text-end">
+        <div class="d-flex gap-1 justify-content-end flex-wrap">
+
+            <a href="{% url 'edit_appointment' appointment.id %}"
+               class="btn btn-sm btn-outline-dark">
+                Edit
+            </a>
+
+            <form method="POST"
+                  action="{% url 'update_appointment_status' appointment.id %}"
+                  class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="COMPLETED">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm btn-success">
+                    Complete
+                </button>
+            </form>
+
+            <form method="POST"
+                  action="{% url 'update_appointment_status' appointment.id %}"
+                  class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="NO_SHOW">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm btn-warning">
+                    No Show
+                </button>
+            </form>
+
+            <form method="POST"
+                  action="{% url 'update_appointment_status' appointment.id %}"
+                  class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="CANCELLED">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Cancel
+                </button>
+            </form>
+
+        </div>
+    </td>
+</tr>

@@ -30,6 +30,8 @@ urlpatterns = [
     path("", include("accounts.urls")),
 
     path("appointments/", include("appointments.urls")),
+
+    path("notifications/", include("notifications.urls")),
 ]
 
 if settings.DEBUG:

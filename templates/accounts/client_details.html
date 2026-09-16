@@ -290,8 +290,12 @@
                                 {{ appointment.time }}
                             </strong>
 
-                            <span>
-                                {{ appointment.status }}
+                            <span class="badge
+                                {% if appointment.status == 'COMPLETED' %}bg-success
+                                {% elif appointment.status == 'CANCELLED' %}bg-secondary
+                                {% elif appointment.status == 'NO_SHOW' %}bg-warning text-dark
+                                {% else %}bg-primary{% endif %}">
+                                {{ appointment.get_status_display }}
                             </span>
                         </div>
 
@@ -300,6 +304,13 @@
                                 {{ appointment.reason }}
                             </div>
                         {% endif %}
+
+                        <div class="mt-2">
+                            <a href="{% url 'edit_appointment' appointment.id %}"
+                               class="small">
+                                Edit / update status
+                            </a>
+                        </div>
 
                     </div>
 

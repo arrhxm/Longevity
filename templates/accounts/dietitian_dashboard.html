@@ -17,9 +17,15 @@
             </p>
         </div>
 
-        <a href="{% url 'revenue_report' %}" class="btn btn-dark">
-            Revenue Report
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dietitian_appointments' %}" class="btn btn-outline-dark">
+                Appointments
+            </a>
+
+            <a href="{% url 'revenue_report' %}" class="btn btn-dark">
+                Revenue Report
+            </a>
+        </div>
     </div>
 
     <!-- Statistics -->
@@ -76,9 +82,29 @@
 
         <div class="card-body p-4">
 
-            <h4 class="fw-bold mb-4">
-                My Clients
-            </h4>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <h4 class="fw-bold mb-0">
+                    My Clients
+                </h4>
+
+                <form method="GET" class="d-flex gap-2">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ search_query }}"
+                        class="form-control"
+                        placeholder="Search clients..."
+                    >
+                    <button type="submit" class="btn btn-outline-dark">
+                        Search
+                    </button>
+                    {% if search_query %}
+                        <a href="{% url 'dietitian_dashboard' %}" class="btn btn-outline-secondary">
+                            Clear
+                        </a>
+                    {% endif %}
+                </form>
+            </div>
 
             {% if clients %}
 
@@ -175,6 +201,36 @@
                     </table>
 
                 </div>
+
+                {% if clients.paginator.num_pages > 1 %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+
+                            {% if clients.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ clients.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Page {{ clients.number }} of {{ clients.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if clients.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ clients.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                        </ul>
+                    </nav>
+                {% endif %}
 
             {% else %}
 
