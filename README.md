@@ -1,4 +1,4 @@
-# Longevity+
+# LongevityX
 
 Longevity+ is a dietitian and client management platform designed to
 help dietitians manage clients, nutrition plans, progress, memberships,
