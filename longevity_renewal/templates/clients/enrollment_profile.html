@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Get Started | Longevity+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="mb-4">
+                <span class="text-secondary">Step 1 of 3</span>
+                <h1 class="fw-bold mt-2">Complete Your Enrollment</h1>
+                <p class="text-secondary">Tell us a little about yourself before choosing your membership plan.</p>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="mb-4">
+                        <h5 class="fw-bold">Account Information</h5>
+                        <p class="small text-secondary">These details were taken from your registration and cannot be changed here.</p>
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="form-label">First Name</label><input class="form-control" value="{{ request.user.first_name }}" readonly></div>
+                            <div class="col-md-6"><label class="form-label">Last Name</label><input class="form-control" value="{{ request.user.last_name }}" readonly></div>
+                            <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" value="{{ request.user.email }}" readonly></div>
+                            <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" value="{{ request.user.phone }}" readonly></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.errors %}<div class="alert alert-danger">Please correct the highlighted fields.</div>{% endif %}
+
+                        <h5 class="fw-bold mb-4">Personal Details</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">D.O.B.</label>{{ form.date_of_birth }}
+                                {{ form.date_of_birth.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender</label>{{ form.gender }}
+                                {{ form.gender.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>{{ form.country }}
+                                {{ form.country.errors }}
+                            </div>
+                        </div>
+
+                        <div id="india-location" class="row g-4 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">State</label>{{ form.state }}
+                                {{ form.state.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>{{ form.city }}
+                                {{ form.city.errors }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="form-label">Goal</label>{{ form.health_goal }}
+                            {{ form.health_goal.errors }}
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button class="btn btn-dark px-4" type="submit">Continue to Plans →</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const country = document.getElementById("id_country");
+    const location = document.getElementById("india-location");
+    const state = document.getElementById("id_state");
+    function updateLocation() {
+        const india = country.value === "IN";
+        location.style.display = india ? "flex" : "none";
+        state.disabled = !india;
+    }
+    country.addEventListener("change", updateLocation);
+    updateLocation();
+})();
+</script>
+{% endblock %}

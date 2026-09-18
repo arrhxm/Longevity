@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Weekly Weight | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5"><div class="row justify-content-center"><div class="col-lg-6"><a href="{% url 'client_progress' %}" class="text-decoration-none">← Back to Progress</a><h1 class="fw-bold mt-3">Weekly Weight Update</h1><p class="text-secondary">Update your weight once each week.</p><div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4"><form method="post">{% csrf_token %}<label class="form-label">Weight (kg)</label>{{ form.weight }}{{ form.weight.errors }}<label class="form-label mt-4">Notes (optional)</label>{{ form.notes }}<button class="btn btn-dark w-100 mt-4">Save Weight</button></form></div></div></div></div></div>
+{% endblock %}

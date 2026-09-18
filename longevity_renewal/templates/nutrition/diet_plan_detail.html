@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ diet_plan.name }} | Longevity+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <a href="{% url 'client_details' diet_plan.client.id %}"
+           class="text-decoration-none">
+            ← Back to Client
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-5">
+        <div>
+            <h1 class="fw-bold mb-1">
+                {{ diet_plan.name }}
+            </h1>
+
+            <p class="text-secondary mb-1">
+                For <strong>{{ diet_plan.client.get_full_name|default:diet_plan.client.username }}</strong>
+                {% if diet_plan.goal %}
+                    &middot; Goal: {{ diet_plan.goal }}
+                {% endif %}
+            </p>
+
+            <p class="text-secondary mb-0 small">
+                {{ diet_plan.start_date }}
+                {% if diet_plan.end_date %} — {{ diet_plan.end_date }}{% endif %}
+                {% if diet_plan.is_active %}
+                    <span class="badge bg-dark ms-2">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary ms-2">Inactive</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <a href="{% url 'edit_diet_plan' diet_plan.id %}" class="btn btn-outline-dark">
+            Edit Plan Details
+        </a>
+    </div>
+
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0">
+            Sections
+        </h4>
+
+        <a href="{% url 'add_section' diet_plan.id %}" class="btn btn-dark">
+            + Add Section
+        </a>
+    </div>
+
+
+    {% if sections %}
+        <div class="row g-3">
+
+            {% for section in sections %}
+                <div class="col-md-6">
+                    <a href="{% url 'section_detail' section.id %}" class="text-decoration-none text-dark">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="fw-bold mb-1">
+                                        {{ section.name }}
+                                    </h5>
+
+                                    {% if section.timing %}
+                                        <span class="badge bg-light text-dark border">
+                                            {{ section.timing }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                {% if section.description %}
+                                    <p class="text-secondary small mb-2">
+                                        {{ section.description }}
+                                    </p>
+                                {% endif %}
+
+                                <p class="text-secondary small mb-0">
+                                    {{ section.meals.count }} meal(s)
+                                    {% if section.option_sections.count %}
+                                        &middot; {{ section.option_sections.count }} option section(s)
+                                    {% endif %}
+                                </p>
+
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 text-center text-secondary">
+                No sections yet. Start by adding one (e.g. Breakfast, Lunch, Dinner).
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

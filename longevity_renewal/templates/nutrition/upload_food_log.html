@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Meal Photo | Longevity+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 720px;">
+    <a href="{% url 'client_dashboard' %}" class="text-decoration-none">← Back to Dashboard</a>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4 p-lg-5">
+            <h2 class="fw-bold mb-1">Upload Meal Photo</h2>
+            <p class="text-secondary mb-4">{{ section.name }}{% if section.timing %} · {{ section.timing }}{% endif %}</p>
+            <div class="alert alert-light border">Upload one photo showing the complete meal you ate. The upload time is recorded automatically.</div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-dark">Upload Photo</button>
+                    <a href="{% url 'client_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,75 +4,46 @@ from django.contrib.auth import get_user_model
 
 
 class ClientProfileForm(forms.ModelForm):
-
     class Meta:
         model = ClientProfile
-
         fields = [
             "phone",
             "date_of_birth",
-            "height",
-            "current_weight",
-            "goal_weight",
+            "gender",
+            "country",
+            "state",
+            "city",
             "health_goal",
             "medical_notes",
         ]
-
         widgets = {
-            "phone": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Enter phone number",
-                }
-            ),
-
-            "date_of_birth": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date",
-                }
-            ),
-
-            "height": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Height in cm",
-                    "step": "0.01",
-                }
-            ),
-
-            "current_weight": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Current weight",
-                    "step": "0.01",
-                }
-            ),
-
-            "goal_weight": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Goal weight",
-                    "step": "0.01",
-                }
-            ),
-
-            "health_goal": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 3,
-                    "placeholder": "Tell us about your health goals...",
-                }
-            ),
-
-            "medical_notes": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 3,
-                    "placeholder": "Add any relevant medical information...",
-                }
-            ),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "date_of_birth": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "gender": forms.Select(attrs={"class": "form-select"}),
+            "country": forms.Select(attrs={"class": "form-select", "id": "id_country"}),
+            "state": forms.Select(attrs={"class": "form-select", "id": "id_state"}),
+            "city": forms.TextInput(attrs={"class": "form-control", "id": "id_city"}),
+            "health_goal": forms.Select(attrs={"class": "form-select"}),
+            "medical_notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["state"].choices = [("", "Select state")] + list(ClientProfile.INDIA_STATE_CHOICES)
+        # Phone belongs to the registered account and is not edited from the profile.
+        self.fields["phone"].disabled = True
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("country") == "IN":
+            if not cleaned.get("state"):
+                self.add_error("state", "Please select your state.")
+            if not cleaned.get("city"):
+                self.add_error("city", "Please enter your city.")
+        else:
+            cleaned["state"] = ""
+            cleaned["city"] = ""
+        return cleaned
 
 User = get_user_model()
 

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Progress Photos | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <a href="{% url 'client_progress' %}" class="text-decoration-none">← Back to Progress</a>
+      <h1 class="fw-bold mt-3">Progress Photos</h1>
+      <p class="text-secondary">Optional and recommended for male clients. Upper body only.</p>
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4 p-lg-5">
+          <p class="small text-secondary">Upload front, side and/or back photographs. The date is recorded automatically when you save them. These photos are kept separate from your monthly measurements.</p>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="row g-4">
+              {% for field in form %}
+              <div class="col-md-4">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {{ field.errors }}
+              </div>
+              {% endfor %}
+            </div>
+            <button class="btn btn-dark mt-4">Save Progress Photos</button>
+          </form>
+        </div>
+      </div>
+      {% if photo_sets %}
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-4">Photo History</h5>
+          {% for photo_set in photo_sets %}
+          <div class="border rounded-3 p-3 mb-3">
+            <div class="fw-semibold mb-3">{{ photo_set.date|date:"d M Y" }}</div>
+            <div class="row g-3">
+              {% if photo_set.front_photo %}<div class="col-md-4"><div class="small text-secondary mb-1">Front</div><a href="{{ photo_set.front_photo.url }}" target="_blank"><img src="{{ photo_set.front_photo.url }}" class="img-fluid rounded" alt="Front progress photo"></a></div>{% endif %}
+              {% if photo_set.side_photo %}<div class="col-md-4"><div class="small text-secondary mb-1">Side</div><a href="{{ photo_set.side_photo.url }}" target="_blank"><img src="{{ photo_set.side_photo.url }}" class="img-fluid rounded" alt="Side progress photo"></a></div>{% endif %}
+              {% if photo_set.back_photo %}<div class="col-md-4"><div class="small text-secondary mb-1">Back</div><a href="{{ photo_set.back_photo.url }}" target="_blank"><img src="{{ photo_set.back_photo.url }}" class="img-fluid rounded" alt="Back progress photo"></a></div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

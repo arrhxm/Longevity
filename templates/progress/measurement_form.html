@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit Measurements{% else %}Update Measurements{% endif %} | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-lg-10">
+        <a href="{% url 'client_progress' %}" class="text-decoration-none">← Back to Progress</a>
+        <div class="card border-0 shadow-sm mt-3"><div class="card-body p-4 p-lg-5">
+            <h2 class="fw-bold">{% if editing %}Edit 30-Day Measurements{% else %}30-Day Body Measurements{% endif %}</h2>
+            <p class="text-secondary">Enter all measurements in inches. The 3-side upper-body photos are optional.</p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                <div class="mb-4"><label class="form-label fw-semibold">Date</label>{{ form.date }}{% for e in form.date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+
+                <h5 class="fw-bold mb-3">Measurements (inches)</h5>
+                <div class="row g-4">
+                    {% for field in form %}
+                        {% if field.name != 'date' and field.name != 'front_photo' and field.name != 'side_photo' and field.name != 'back_photo' and field.name != 'notes' %}
+                            <div class="col-md-4"><label class="form-label">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <hr class="my-5">
+                <h5 class="fw-bold mb-2">3-Side Progress Photos</h5>
+                <p class="text-secondary small">Optional and recommended for male clients. Upper body is sufficient. You may upload front, side and back photos.</p>
+                <div class="row g-4">
+                    <div class="col-md-4"><label class="form-label">Front photo</label>{{ form.front_photo }}{% if record.front_photo %}<div class="small mt-2">Existing photo will be kept unless replaced.</div>{% endif %}</div>
+                    <div class="col-md-4"><label class="form-label">Side photo</label>{{ form.side_photo }}{% if record.side_photo %}<div class="small mt-2">Existing photo will be kept unless replaced.</div>{% endif %}</div>
+                    <div class="col-md-4"><label class="form-label">Back photo</label>{{ form.back_photo }}{% if record.back_photo %}<div class="small mt-2">Existing photo will be kept unless replaced.</div>{% endif %}</div>
+                </div>
+
+                <div class="mt-4"><label class="form-label">Notes (optional)</label>{{ form.notes }}</div>
+                <div class="d-flex gap-2 justify-content-end mt-4"><a href="{% url 'client_progress' %}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-dark">Save Measurements</button></div>
+            </form>
+        </div></div>
+    </div></div>
+</div>
+{% endblock %}

@@ -1,14 +1,15 @@
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum
+from django.db.models import Exists, OuterRef, Q, Sum
 from django.shortcuts import redirect, render
-from clients.models import ClientProfile
+from django.utils import timezone
+from clients.models import ClientProfile, Enrollment
 from nutrition.models import DietPlan
-from progress.forms import ProgressRecordForm
-from progress.models import ProgressRecord
-from payments.forms import MembershipForm, PaymentForm
+from progress.models import ProgressRecord, ProgressPhotoSet
+from payments.forms import PaymentForm
 from payments.models import Membership, Payment
 from decimal import Decimal
+from datetime import timedelta
 from django.shortcuts import get_object_or_404 
 import random
 from .models import User, RegistrationOTP
@@ -170,13 +171,17 @@ def dietitian_dashboard(request):
 
     sync_membership_statuses()
 
+    active_membership_exists = Membership.objects.filter(
+        client__user=OuterRef("pk"),
+        status=Membership.Status.ACTIVE,
+    )
+
     clients_qs = (
         User.objects
         .filter(role="CLIENT")
-        .prefetch_related(
-            "client_profile__memberships"
-        )
-        .order_by("first_name", "last_name")
+        .annotate(has_active_membership=Exists(active_membership_exists))
+        .prefetch_related("client_profile__memberships")
+        .order_by("-has_active_membership", "first_name", "last_name")
     )
 
     search_query = request.GET.get("q", "").strip()
@@ -242,6 +247,26 @@ def client_details(request, client_id):
         .order_by("-date", "-time")
     )
 
+    active_membership = memberships.filter(
+        status=Membership.Status.ACTIVE
+    ).first()
+    latest_measurement = (
+        progress_records
+        .exclude(record_type=ProgressRecord.RecordType.WEEKLY_WEIGHT)
+        .first()
+    )
+    measurement_values = [
+        ("Neck circumference", latest_measurement.neck_circumference if latest_measurement else None),
+        ("Chest circumference", latest_measurement.chest_circumference if latest_measurement else None),
+        ("Shoulder circumference", latest_measurement.shoulder_circumference if latest_measurement else None),
+        ("Stomach on the naval", latest_measurement.stomach_on_naval if latest_measurement else None),
+        ("Stomach above the naval", latest_measurement.stomach_above_naval if latest_measurement else None),
+        ("Stomach below the naval", latest_measurement.stomach_below_naval if latest_measurement else None),
+        ("Arms Flexed", latest_measurement.arms_flexed if latest_measurement else None),
+        ("Waist", latest_measurement.waist if latest_measurement else None),
+        ("Thighs (Mid section above knee)", latest_measurement.thighs_mid_section if latest_measurement else None),
+    ]
+
     return render(
         request,
         "accounts/client_details.html",
@@ -251,6 +276,9 @@ def client_details(request, client_id):
             "progress_records": progress_records,
             "memberships": memberships,
             "appointments": appointments,
+            "active_membership": active_membership,
+            "latest_measurement": latest_measurement,
+            "measurement_values": measurement_values,
         },
     )
 def edit_client_profile(request, client_id):
@@ -289,45 +317,43 @@ def client_dashboard(request):
     if request.user.role != "CLIENT":
         return redirect("dashboard")
 
-    profile, created = ClientProfile.objects.get_or_create(
-        user=request.user
-    )
-    profile_complete = all([
-    profile.date_of_birth,
-    profile.height,
-    profile.current_weight,
-    profile.goal_weight,
-    profile.health_goal,
-    ])
-
-    active_diet_plan = (
-        DietPlan.objects
-        .filter(
-            client=request.user,
-            is_active=True,
-        )
-        .prefetch_related("sections__meals", "sections__option_sections__meals")
+    profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+    from payments.services import sync_membership_statuses
+    sync_membership_statuses()
+    enrollment = getattr(profile, "enrollment", None)
+    active_membership = (
+        Membership.objects
+        .filter(client=profile, status=Membership.Status.ACTIVE)
         .order_by("-start_date")
         .first()
     )
-    active_membership = (
-    Membership.objects
-    .filter(
-        client=profile,
-        status=Membership.Status.ACTIVE,
-    )
-    .order_by("-start_date")
-    .first()
-    )
+    has_membership_history = Membership.objects.filter(client=profile).exists()
+    membership_expiring_soon = False
+    membership_days_remaining = None
+    if active_membership:
+        today = timezone.localdate()
+        membership_days_remaining = (active_membership.end_date - today).days
+        membership_expiring_soon = 0 <= membership_days_remaining <= 7
+
+    initial_measurements_complete = profile.progress_records.filter(
+        record_type=ProgressRecord.RecordType.INITIAL
+    ).exists()
+
+    active_diet_plan = None
+    if active_membership:
+        active_diet_plan = (
+            DietPlan.objects
+            .filter(client=request.user, is_active=True)
+            .prefetch_related("sections__meals", "sections__option_sections__meals")
+            .order_by("-start_date")
+            .first()
+        )
 
     next_appointment = (
-    Appointment.objects
-    .filter(
-        client=profile,
-        status=Appointment.Status.SCHEDULED,
-    )
-    .order_by("date", "time")
-    .first()
+        Appointment.objects
+        .filter(client=profile, status=Appointment.Status.SCHEDULED)
+        .order_by("date", "time")
+        .first()
     )
     notifications = (
         Notification.objects
@@ -340,13 +366,18 @@ def client_dashboard(request):
         "accounts/client_dashboard.html",
         {
             "profile": profile,
+            "enrollment": enrollment,
             "active_diet_plan": active_diet_plan,
             "active_membership": active_membership,
+            "has_membership_history": has_membership_history,
+            "membership_expiring_soon": membership_expiring_soon,
+            "membership_days_remaining": membership_days_remaining,
             "next_appointment": next_appointment,
-            "profile_complete": profile_complete,
+            "initial_measurements_complete": initial_measurements_complete,
             "notifications": notifications,
         },
     )
+
 def client_profile(request):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -379,51 +410,50 @@ def client_profile(request):
             "profile": profile,
         },
     )
-def add_progress(request, client_id):
+def dietitian_client_progress(request, client_id):
+    """Read-only progress view for the dietitian.
+
+    Progress is entered by the client through the weekly/monthly forms.
+    The dietitian can review the dated history but cannot create or edit records.
+    """
     if not request.user.is_authenticated:
         return redirect("login")
 
     if request.user.role != "DIETITIAN":
         return redirect("dashboard")
 
-    client, _ = ClientProfile.objects.get_or_create(
-        user_id=client_id
+    client = get_object_or_404(ClientProfile, user_id=client_id)
+    progress_records = (
+        ProgressRecord.objects
+        .filter(client=client)
+        .order_by("-date", "-created_at")
     )
 
-    if request.method == "POST":
-        form = ProgressRecordForm(request.POST)
-
-        if form.is_valid():
-            progress = form.save(commit=False)
-            progress.client = client
-            progress.save()
-
-            Notification.objects.create(
-                user=client.user,
-                notification_type=Notification.NotificationType.PROGRESS,
-                title="New Progress Update",
-                message=(
-                    f"Your dietitian logged a new progress record for "
-                    f"{progress.date}."
-                ),
-            )
-
-            return redirect(
-                "add_progress",
-                client_id=client.user_id,
-            )
-
-    else:
-        form = ProgressRecordForm()
+    weight_records = progress_records.filter(weight__isnull=False).order_by("date", "created_at")
+    progress_photo_sets = ProgressPhotoSet.objects.filter(client=client).order_by("-date", "-id")
+    chart_labels = [record.date.strftime("%d %b %Y") for record in weight_records]
+    chart_weights = [float(record.weight) for record in weight_records]
 
     return render(
         request,
-        "accounts/add_progress.html",
+        "accounts/dietitian_progress.html",
         {
-            "form": form,
             "client": client,
+            "progress_records": progress_records,
+            "chart_labels": chart_labels,
+            "chart_weights": chart_weights,
+            "progress_photo_sets": progress_photo_sets,
         },
     )
+
+
+def add_progress(request, client_id):
+    """Legacy endpoint kept for old bookmarks; dietitians can no longer edit progress."""
+    if request.user.is_authenticated and request.user.role == "DIETITIAN":
+        return redirect("dietitian_client_progress", client_id=client_id)
+    return redirect("dashboard")
+
+
 def client_progress(request):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -452,6 +482,7 @@ def client_progress(request):
         for record in progress_records
         if record.weight is not None
     ]
+    progress_photo_sets = ProgressPhotoSet.objects.filter(client=profile).order_by("-date", "-id")
 
     return render(
         request,
@@ -461,40 +492,7 @@ def client_progress(request):
             "progress_records": progress_records,
             "chart_labels": chart_labels,
             "chart_weights": chart_weights,
-        },
-    )
-def create_membership(request, client_id):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    if request.user.role != "DIETITIAN":
-        return redirect("dashboard")
-
-    client, _ = ClientProfile.objects.get_or_create(
-        user_id=client_id
-    )
-
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-
-        if form.is_valid():
-            membership = form.save(commit=False)
-            membership.client = client
-            membership.save()
-
-            return redirect(
-                "dietitian_dashboard"
-            )
-
-    else:
-        form = MembershipForm()
-
-    return render(
-        request,
-        "accounts/create_membership.html",
-        {
-            "form": form,
-            "client": client,
+            "progress_photo_sets": progress_photo_sets,
         },
     )
 def add_payment(request, membership_id):

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Review Food Log | Longevity+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 900px;">
+    <a href="{% url 'dietitian_food_logs' %}" class="text-decoration-none">← Back to Food Logs</a>
+    <div class="row g-4 mt-1">
+      <div class="col-lg-7"><div class="card border-0 shadow-sm"><img src="{{ food_log.photo.url }}" class="img-fluid rounded" alt="Client meal photo"></div></div>
+      <div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h3 class="fw-bold">{{ food_log.client.get_full_name|default:food_log.client.username }}</h3>
+        <p class="mb-1"><strong>Section:</strong> {{ food_log.section.name }}</p>
+        {% if food_log.section.timing %}<p class="mb-1"><strong>Assigned time:</strong> {{ food_log.section.timing }}</p>{% endif %}
+        {% if food_log.option_section %}<p class="mb-1"><strong>Selected option:</strong> {{ food_log.option_section.name }}</p>{% endif %}
+        <p class="text-secondary small">Client logged at {{ food_log.uploaded_at|date:"d M Y, h:i A" }}</p>
+
+        <div class="border rounded-3 p-3 mb-3">
+          <div class="fw-semibold mb-2">Assigned meal at time of log</div>
+          {% if food_log.prescribed_meals %}
+            <ul class="mb-0 ps-3">
+              {% for meal in food_log.prescribed_meals %}
+                <li>
+                  {{ meal.name }}
+                  {% if meal.quantity or meal.unit %} — {{ meal.quantity }} {{ meal.unit }}{% endif %}
+                  {% if meal.notes %}<span class="text-secondary small">({{ meal.notes }})</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="small text-secondary">No meal snapshot available for this log.</div>
+          {% endif %}
+        </div>
+
+        {% if food_log.note %}<div class="alert alert-light border"><strong>Client note:</strong> {{ food_log.note }}</div>{% endif %}
+        <form method="POST">{% csrf_token %}
+          <div class="mb-3"><label class="form-label fw-semibold">Review</label>{{ form.review_status }}</div>
+          <div class="mb-3"><label class="form-label fw-semibold">Feedback</label>{{ form.dietitian_feedback }}</div>
+          <button class="btn btn-dark w-100" type="submit">Save Review</button>
+        </form>
+      </div></div></div>
+    </div>
+</div>
+{% endblock %}

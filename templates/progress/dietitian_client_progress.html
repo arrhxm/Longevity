@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Client Progress | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-5">
+        <div>
+            <a href="{% url 'client_details' client.user.id %}" class="text-decoration-none">← Back to Client</a>
+            <h1 class="fw-bold mt-3 mb-1">Progress Report</h1>
+            <p class="text-secondary mb-0">{{ client.user.get_full_name|default:client.user.username }}</p>
+        </div>
+    </div>
+
+    <div class="alert alert-light border mb-4">
+        <strong>Read-only progress report.</strong> Weight and body measurements are entered by the client. The dietitian can review all submitted records here.
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <p class="text-secondary mb-1">Latest Weight</p>
+            <h2 class="fw-bold">{% if latest_weight %}{{ latest_weight.weight }} kg{% else %}--{% endif %}</h2>
+            <small class="text-secondary">{% if latest_weight %}{{ latest_weight.date }}{% else %}No record{% endif %}</small>
+        </div></div></div>
+        <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <p class="text-secondary mb-1">Latest Measurements</p>
+            <h2 class="fw-bold">{% if latest_measurement %}{{ latest_measurement.date }}{% else %}--{% endif %}</h2>
+            <small class="text-secondary">30-day measurement record</small>
+        </div></div></div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-body p-4 p-lg-5">
+            <h4 class="fw-bold mb-4">Weekly Weight History</h4>
+            {% if weight_records %}
+            <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Date</th><th>Weight</th></tr></thead><tbody>
+                {% for record in weight_records %}<tr><td>{{ record.date }}</td><td>{{ record.weight }} kg</td></tr>{% endfor %}
+            </tbody></table></div>
+            {% else %}<p class="text-secondary mb-0">No weight records submitted yet.</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 p-lg-5">
+            <h4 class="fw-bold mb-4">30-Day Body Measurements</h4>
+            {% if measurement_records %}
+                {% for record in measurement_records %}
+                    <div class="border rounded-4 p-4 mb-4">
+                        <h5 class="fw-bold mb-4">{{ record.date }}</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4"><strong>Neck:</strong> {{ record.neck }} in</div>
+                            <div class="col-md-4"><strong>Chest:</strong> {{ record.chest }} in</div>
+                            <div class="col-md-4"><strong>Shoulder:</strong> {{ record.shoulder }} in</div>
+                            <div class="col-md-4"><strong>Stomach at naval:</strong> {{ record.stomach_navel }} in</div>
+                            <div class="col-md-4"><strong>Stomach above naval:</strong> {{ record.stomach_above_navel }} in</div>
+                            <div class="col-md-4"><strong>Stomach below naval:</strong> {{ record.stomach_below_navel }} in</div>
+                            <div class="col-md-4"><strong>Arms flexed:</strong> {{ record.arms_flexed }} in</div>
+                            <div class="col-md-4"><strong>Waist:</strong> {{ record.waist }} in</div>
+                            <div class="col-md-4"><strong>Thighs (mid above knee):</strong> {{ record.thighs_mid_above_knee }} in</div>
+                        </div>
+
+                        {% if record.front_photo or record.side_photo or record.back_photo %}
+                            <hr class="my-4"><h6 class="fw-bold mb-3">3-Side Progress Photos</h6>
+                            <div class="row g-3">
+                                {% if record.front_photo %}<div class="col-md-4"><img src="{{ record.front_photo.url }}" class="img-fluid rounded-3" alt="Front progress photo"></div>{% endif %}
+                                {% if record.side_photo %}<div class="col-md-4"><img src="{{ record.side_photo.url }}" class="img-fluid rounded-3" alt="Side progress photo"></div>{% endif %}
+                                {% if record.back_photo %}<div class="col-md-4"><img src="{{ record.back_photo.url }}" class="img-fluid rounded-3" alt="Back progress photo"></div>{% endif %}
+                            </div>
+                        {% endif %}
+                        {% if record.notes %}<div class="mt-4"><strong>Client notes:</strong> {{ record.notes }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}<p class="text-secondary mb-0">No measurement records submitted yet.</p>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

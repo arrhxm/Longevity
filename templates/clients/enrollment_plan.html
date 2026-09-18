@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Choose Membership | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="mb-4">
+                <span class="text-secondary">Step 2 of 3</span>
+                <h1 class="fw-bold mt-2">Choose Your Membership</h1>
+                <p class="text-secondary">Select the membership duration that suits you.</p>
+            </div>
+
+            {% if plans %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-4">
+                    {% for plan in plans %}
+                    <div class="col-md-6">
+                        <label class="w-100 h-100">
+                            <input type="radio" name="plan" value="{{ plan.id }}" class="d-none plan-radio" {% if enrollment.membership_plan_id == plan.id %}checked{% endif %} required>
+                            <div class="card border shadow-sm rounded-4 h-100 plan-card">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h4 class="fw-bold mb-1">{{ plan.name }}</h4>
+                                            <div class="text-secondary">{{ plan.duration_months }} month{{ plan.duration_months|pluralize }}</div>
+                                        </div>
+                                        <h3 class="fw-bold">₹{{ plan.amount|floatformat:0 }}</h3>
+                                    </div>
+                                    <div class="mt-4 small text-secondary">Membership will be activated automatically after successful payment.</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'enrollment_profile' %}" class="btn btn-outline-secondary">← Back</a>
+                    <button class="btn btn-dark px-4" type="submit">Continue to Payment →</button>
+                </div>
+            </form>
+            {% else %}
+                <div class="alert alert-warning">Membership plans are not configured for {{ profile.get_country_display }} yet.</div>
+                <a href="{% url 'enrollment_profile' %}" class="btn btn-outline-dark">Back to Profile</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+.plan-card { transition: .15s ease; }
+.plan-radio:checked + .plan-card { border: 2px solid #111 !important; transform: translateY(-2px); }
+</style>
+{% endblock %}
