@@ -196,17 +196,6 @@
                             </div>
                         </div>
 
-                        <div class="col-md-4">
-                            <div class="bg-light rounded p-3">
-                                <small class="text-secondary">
-                                    Calories / Day
-                                </small>
-
-                                <div class="fw-semibold">
-                                    {{ active_diet_plan.calories_per_day|default:"Not specified" }}
-                                </div>
-                            </div>
-                        </div>
 
                     </div>
 
@@ -283,6 +272,12 @@
                                     </ul>
                                 </div>
                             {% endfor %}
+
+                            <div class="mt-3">
+                                <a href="{% url 'upload_food_log' section.id %}" class="btn btn-outline-dark btn-sm">
+                                    📷 Upload Meal Photo
+                                </a>
+                            </div>
 
                         </div>
 
@@ -625,6 +620,10 @@
 
         </div>
 
+    </div>
+
+    <div class="text-center mb-4">
+        <a href="{% url 'client_food_logs' %}" class="btn btn-outline-dark">View My Food Logs</a>
     </div>
 
 </div>

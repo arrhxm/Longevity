@@ -1,11 +1,15 @@
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 
 from clients.models import ClientProfile
 from notifications.models import Notification
 
-from .forms import DietPlanForm, MealForm, OptionSectionForm, SectionForm
-from .models import DietPlan, Meal, OptionSection, Section
+from .forms import (
+    DietPlanForm, MealForm, OptionSectionForm, SectionForm,
+    FoodLogForm, FoodLogReviewForm,
+)
+from .models import DietPlan, Meal, OptionSection, Section, FoodLog
 
 
 def _require_dietitian(request):
@@ -418,3 +422,125 @@ def delete_meal(request, meal_id):
         meal.delete()
 
     return redirect("section_detail", section_id=section.id)
+
+
+@login_required
+def upload_food_log(request, section_id):
+    if request.user.role != "CLIENT":
+        return redirect("dashboard")
+
+    section = get_object_or_404(
+        Section.objects.select_related("diet_plan"),
+        id=section_id,
+        diet_plan__client=request.user,
+        diet_plan__is_active=True,
+    )
+
+    if request.method == "POST":
+        form = FoodLogForm(request.POST, request.FILES, section=section)
+        if form.is_valid():
+            food_log = form.save(commit=False)
+            food_log.client = request.user
+            food_log.diet_plan = section.diet_plan
+            food_log.section = section
+
+            # Capture exactly what was prescribed at the time of eating/upload.
+            # Direct meals are always included; option meals are included only
+            # for the option selected by the client.
+            selected_option = form.cleaned_data.get("option_section")
+            prescribed_meals = []
+
+            for meal in section.meals.all():
+                prescribed_meals.append({
+                    "name": meal.name,
+                    "quantity": meal.quantity,
+                    "unit": meal.unit,
+                    "notes": meal.notes,
+                    "type": "meal",
+                })
+
+            if selected_option is not None:
+                for meal in selected_option.meals.all():
+                    prescribed_meals.append({
+                        "name": meal.name,
+                        "quantity": meal.quantity,
+                        "unit": meal.unit,
+                        "notes": meal.notes,
+                        "type": "option_meal",
+                    })
+
+            food_log.prescribed_meals = prescribed_meals
+            food_log.full_clean()
+            food_log.save()
+            return redirect("client_dashboard")
+    else:
+        form = FoodLogForm(section=section)
+
+    return render(
+        request,
+        "nutrition/upload_food_log.html",
+        {"form": form, "section": section, "diet_plan": section.diet_plan},
+    )
+
+
+@login_required
+def client_food_logs(request):
+    if request.user.role != "CLIENT":
+        return redirect("dashboard")
+
+    food_logs = (
+        FoodLog.objects
+        .filter(client=request.user)
+        .select_related("diet_plan", "section", "option_section")
+    )
+
+    return render(
+        request,
+        "nutrition/client_food_logs.html",
+        {"food_logs": food_logs},
+    )
+
+
+@login_required
+def dietitian_food_logs(request):
+    if not _require_dietitian(request):
+        return redirect("dashboard")
+
+    food_logs = (
+        FoodLog.objects
+        .select_related("client", "diet_plan", "section", "option_section")
+        .all()
+    )
+
+    return render(
+        request,
+        "nutrition/dietitian_food_logs.html",
+        {"food_logs": food_logs},
+    )
+
+
+@login_required
+def review_food_log(request, food_log_id):
+    if not _require_dietitian(request):
+        return redirect("dashboard")
+
+    food_log = get_object_or_404(
+        FoodLog.objects.select_related("client", "diet_plan", "section", "option_section"),
+        id=food_log_id,
+    )
+
+    if request.method == "POST":
+        form = FoodLogReviewForm(request.POST, instance=food_log)
+        if form.is_valid():
+            reviewed_log = form.save(commit=False)
+            reviewed_log.reviewed_at = timezone.now()
+            reviewed_log.save()
+            return redirect("dietitian_food_logs")
+    else:
+        form = FoodLogReviewForm(instance=food_log)
+
+    return render(
+        request,
+        "nutrition/review_food_log.html",
+        {"form": form, "food_log": food_log},
+    )

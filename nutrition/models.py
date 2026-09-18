@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 
 class DietPlan(models.Model):
@@ -185,3 +186,76 @@ class Meal(models.Model):
     def __str__(self):
         quantity_display = f"{self.quantity} {self.unit}".strip()
         return f"{self.name} - {quantity_display}" if quantity_display else self.name
+
+
+class FoodLog(models.Model):
+    """A client's photo log for one diet-plan section/meal occasion."""
+
+    class ReviewStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        FOLLOWED = "FOLLOWED", "Followed"
+        PARTIALLY_FOLLOWED = "PARTIALLY_FOLLOWED", "Partially followed"
+        NOT_FOLLOWED = "NOT_FOLLOWED", "Not followed"
+
+    client = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="food_logs",
+        limit_choices_to={"role": "CLIENT"},
+    )
+    diet_plan = models.ForeignKey(
+        DietPlan,
+        on_delete=models.CASCADE,
+        related_name="food_logs",
+    )
+    section = models.ForeignKey(
+        Section,
+        on_delete=models.CASCADE,
+        related_name="food_logs",
+    )
+    option_section = models.ForeignKey(
+        OptionSection,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="food_logs",
+    )
+    photo = models.FileField(
+        upload_to="food_logs/%Y/%m/%d/",
+        validators=[FileExtensionValidator(
+            allowed_extensions=["jpg", "jpeg", "png", "webp"]
+        )],
+    )
+    note = models.TextField(blank=True)
+    # Snapshot of the meals and quantities assigned when this food log was submitted.
+    # This keeps historical logs accurate even if the diet plan is edited later.
+    prescribed_meals = models.JSONField(default=list, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    review_status = models.CharField(
+        max_length=30,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+    )
+    dietitian_feedback = models.TextField(blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.client_id and self.diet_plan_id:
+            if self.diet_plan.client_id != self.client_id:
+                raise ValidationError("Food log client must match the diet plan client.")
+
+        if self.section_id and self.diet_plan_id:
+            if self.section.diet_plan_id != self.diet_plan_id:
+                raise ValidationError("Section must belong to the selected diet plan.")
+
+        if self.option_section_id and self.section_id:
+            if self.option_section.section_id != self.section_id:
+                raise ValidationError("Option section must belong to the selected section.")
+
+    def __str__(self):
+        return f"{self.client.username} - {self.section.name} - {self.uploaded_at:%Y-%m-%d %H:%M}"

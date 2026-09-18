@@ -1,6 +1,7 @@
 from django import forms
 
-from .models import DietPlan, Meal, OptionSection, Section
+from .models import DietPlan, Meal, OptionSection, Section, FoodLog
+
 
 
 class DietPlanForm(forms.ModelForm):
@@ -174,4 +175,52 @@ class MealForm(forms.ModelForm):
                     "placeholder": "Preparation / notes (optional)",
                 }
             ),
+        }
+
+
+class FoodLogForm(forms.ModelForm):
+
+    class Meta:
+        model = FoodLog
+        fields = ["option_section", "photo", "note"]
+        widgets = {
+            "option_section": forms.Select(attrs={"class": "form-select"}),
+            "photo": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Optional note about this meal...",
+            }),
+        }
+
+    def __init__(self, *args, section=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["option_section"].queryset = (
+            section.option_sections.all() if section is not None else OptionSection.objects.none()
+        )
+        self.fields["option_section"].required = False
+        if section is not None and not section.option_sections.exists():
+            self.fields.pop("option_section")
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        if photo and photo.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Photo must be 10 MB or smaller.")
+        if photo and getattr(photo, "content_type", "") and not photo.content_type.startswith("image/"):
+            raise forms.ValidationError("Please upload an image file.")
+        return photo
+
+
+class FoodLogReviewForm(forms.ModelForm):
+
+    class Meta:
+        model = FoodLog
+        fields = ["review_status", "dietitian_feedback"]
+        widgets = {
+            "review_status": forms.Select(attrs={"class": "form-select"}),
+            "dietitian_feedback": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Write feedback for the client...",
+            }),
         }

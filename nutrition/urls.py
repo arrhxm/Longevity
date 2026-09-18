@@ -7,6 +7,7 @@ from .views import (
     add_section,
     create_diet_plan,
     delete_meal,
+    upload_food_log, client_food_logs, dietitian_food_logs, review_food_log,
     delete_option_section,
     delete_section,
     diet_plan_detail,
@@ -91,4 +92,9 @@ urlpatterns = [
         delete_meal,
         name="delete_meal",
     ),
+
+    path("food-log/upload/<int:section_id>/", upload_food_log, name="upload_food_log"),
+    path("my-food-logs/", client_food_logs, name="client_food_logs"),
+    path("food-logs/", dietitian_food_logs, name="dietitian_food_logs"),
+    path("food-log/<int:food_log_id>/review/", review_food_log, name="review_food_log"),
 ]

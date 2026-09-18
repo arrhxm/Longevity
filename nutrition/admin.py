@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DietPlan, Meal, OptionSection, Section
+from .models import DietPlan, Meal, OptionSection, Section, FoodLog
 
 
 class MealInline(admin.TabularInline):
@@ -96,3 +96,11 @@ class MealAdmin(admin.ModelAdmin):
         "section__name",
         "option_section__name",
     )
+
+
+@admin.register(FoodLog)
+class FoodLogAdmin(admin.ModelAdmin):
+    list_display = ("client", "section", "option_section", "uploaded_at", "review_status")
+    list_filter = ("review_status", "uploaded_at")
+    search_fields = ("client__username", "client__email", "section__name")
+    readonly_fields = ("uploaded_at", "reviewed_at")
