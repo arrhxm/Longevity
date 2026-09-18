@@ -82,6 +82,7 @@ class DietitianClientFlowTests(TestCase):
             reverse("create_diet_plan", args=[self.client_user.id]),
             {
                 "name": "Test Plan",
+                "goal": "Fat Loss",
                 "description": "desc",
                 "start_date": "2026-01-01",
                 "end_date": "2026-02-01",
@@ -90,6 +91,13 @@ class DietitianClientFlowTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
+
+        from nutrition.models import DietPlan
+
+        plan = DietPlan.objects.get(name="Test Plan")
+        self.assertRedirects(
+            response, reverse("diet_plan_detail", args=[plan.id])
+        )
 
     def test_add_progress_redirects_with_correct_user_id(self):
         response = self.client.post(

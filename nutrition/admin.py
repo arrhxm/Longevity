@@ -1,11 +1,21 @@
 from django.contrib import admin
 
-from .models import DietPlan, Meal
+from .models import DietPlan, Meal, OptionSection, Section
 
 
 class MealInline(admin.TabularInline):
     model = Meal
-    extra = 1
+    extra = 0
+
+
+class OptionSectionInline(admin.TabularInline):
+    model = OptionSection
+    extra = 0
+
+
+class SectionInline(admin.TabularInline):
+    model = Section
+    extra = 0
 
 
 @admin.register(DietPlan)
@@ -13,9 +23,9 @@ class DietPlanAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "client",
+        "goal",
         "start_date",
         "end_date",
-        "calories_per_day",
         "is_active",
     )
 
@@ -30,27 +40,59 @@ class DietPlanAdmin(admin.ModelAdmin):
         "start_date",
     )
 
+    inlines = [SectionInline]
+
+
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = (
+        "diet_plan",
+        "name",
+        "timing",
+        "order",
+    )
+
+    list_filter = (
+        "diet_plan",
+    )
+
+    search_fields = (
+        "name",
+        "diet_plan__name",
+    )
+
+    inlines = [OptionSectionInline, MealInline]
+
+
+@admin.register(OptionSection)
+class OptionSectionAdmin(admin.ModelAdmin):
+    list_display = (
+        "section",
+        "name",
+        "instruction",
+        "order",
+    )
+
+    search_fields = (
+        "name",
+        "section__name",
+    )
+
     inlines = [MealInline]
 
 
 @admin.register(Meal)
 class MealAdmin(admin.ModelAdmin):
     list_display = (
-        "diet_plan",
-        "meal_type",
         "name",
-        "calories",
-        "protein",
-        "carbohydrates",
-        "fats",
-    )
-
-    list_filter = (
-        "meal_type",
+        "quantity",
+        "unit",
+        "section",
+        "option_section",
     )
 
     search_fields = (
         "name",
-        "diet_plan__name",
-        "diet_plan__client__username",
+        "section__name",
+        "option_section__name",
     )

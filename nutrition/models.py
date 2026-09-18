@@ -12,6 +12,12 @@ class DietPlan(models.Model):
 
     name = models.CharField(max_length=200)
 
+    goal = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Example: Fat Loss, Toned Body & Fat Loss",
+    )
+
     description = models.TextField(blank=True)
 
     start_date = models.DateField()
@@ -31,55 +37,151 @@ class DietPlan(models.Model):
         return f"{self.name} - {self.client.username}"
 
 
-class Meal(models.Model):
-
-    class MealType(models.TextChoices):
-        BREAKFAST = "BREAKFAST", "Breakfast"
-        MORNING_SNACK = "MORNING_SNACK", "Morning Snack"
-        LUNCH = "LUNCH", "Lunch"
-        EVENING_SNACK = "EVENING_SNACK", "Evening Snack"
-        DINNER = "DINNER", "Dinner"
+class Section(models.Model):
+    """
+    A top-level block of a diet plan, e.g. "Breakfast", "Lunch",
+    "Pre-Workout". A section can contain meals directly, option
+    sections (alternatives to choose from), or both at once -- e.g. a
+    Lunch section can list its main items directly *and* offer a
+    "choose one" option section for the side dish.
+    """
 
     diet_plan = models.ForeignKey(
         DietPlan,
         on_delete=models.CASCADE,
-        related_name="meals",
+        related_name="sections",
     )
 
-    meal_type = models.CharField(
-        max_length=20,
-        choices=MealType.choices,
+    name = models.CharField(
+        max_length=200,
+        help_text="Example: Breakfast, Lunch, Evening Snack",
     )
 
-    name = models.CharField(max_length=200)
+    timing = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Example: 8:00 AM, 15 minutes before breakfast",
+    )
 
     description = models.TextField(blank=True)
 
-    calories = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-    )
+    order = models.PositiveIntegerField(default=0)
 
-    protein = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    carbohydrates = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
-
-    fats = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
+    class Meta:
+        ordering = ["order", "id"]
 
     def __str__(self):
-        return f"{self.diet_plan.name} - {self.get_meal_type_display()}"
+        return f"{self.diet_plan.name} - {self.name}"
+
+
+class OptionSection(models.Model):
+    """
+    A set of alternatives nested inside a Section, e.g. "Option 1" /
+    "Option 2" / "Option 3" for an evening snack, or the "Choose ONE"
+    side-dish choice inside Lunch.
+    """
+
+    section = models.ForeignKey(
+        Section,
+        on_delete=models.CASCADE,
+        related_name="option_sections",
+    )
+
+    name = models.CharField(
+        max_length=200,
+        help_text="Example: Option 1, Choose ONE",
+    )
+
+    instruction = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Example: Choose ONE",
+    )
+
+    order = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.section.name} - {self.name}"
+
+
+class Meal(models.Model):
+    """
+    A single food item. Belongs to exactly one of Section (direct) or
+    OptionSection (nested alternative) -- never both, never neither.
+    """
+
+    section = models.ForeignKey(
+        Section,
+        on_delete=models.CASCADE,
+        related_name="meals",
+        null=True,
+        blank=True,
+    )
+
+    option_section = models.ForeignKey(
+        OptionSection,
+        on_delete=models.CASCADE,
+        related_name="meals",
+        null=True,
+        blank=True,
+    )
+
+    name = models.CharField(
+        max_length=200,
+        help_text="Example: Roasted makhana, Chicken breast",
+    )
+
+    quantity = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Example: 25, 60-80, 2",
+    )
+
+    unit = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Example: g, ml, tablet, rotis",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        help_text="Preparation notes, e.g. raw weight, air fried",
+    )
+
+    order = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(section__isnull=False, option_section__isnull=True)
+                    | models.Q(section__isnull=True, option_section__isnull=False)
+                ),
+                name="meal_has_exactly_one_parent",
+            )
+        ]
+
+    @property
+    def parent_section(self):
+        return self.section or (
+            self.option_section.section if self.option_section else None
+        )
+
+    @property
+    def diet_plan(self):
+        parent = self.parent_section
+        return parent.diet_plan if parent else None
+
+    def __str__(self):
+        quantity_display = f"{self.quantity} {self.unit}".strip()
+        return f"{self.name} - {quantity_display}" if quantity_display else self.name

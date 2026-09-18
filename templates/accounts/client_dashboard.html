@@ -218,69 +218,75 @@
                     Today's Meal Plan
                 </h5>
 
-                {% if active_diet_plan.meals.all %}
+                {% if active_diet_plan.sections.all %}
 
-                    <div class="row g-4">
+                    {% for section in active_diet_plan.sections.all %}
 
-                        {% for meal in active_diet_plan.meals.all %}
+                        <div class="mb-4">
 
-                            <div class="col-md-6">
+                            <div class="d-flex align-items-baseline gap-2 mb-2">
+                                <h6 class="fw-bold text-uppercase mb-0">
+                                    {{ section.name }}
+                                </h6>
 
-                                <div class="card h-100 border">
-
-                                    <div class="card-body p-4">
-
-                                        <span class="badge bg-dark mb-3">
-                                            {{ meal.get_meal_type_display }}
-                                        </span>
-
-                                        <h5 class="fw-bold">
-                                            {{ meal.name }}
-                                        </h5>
-
-                                        {% if meal.description %}
-                                            <p class="text-secondary">
-                                                {{ meal.description }}
-                                            </p>
-                                        {% endif %}
-
-                                        <div class="small text-secondary">
-
-                                            {% if meal.calories %}
-                                                <span class="me-3">
-                                                    {{ meal.calories }} kcal
-                                                </span>
-                                            {% endif %}
-
-                                            {% if meal.protein %}
-                                                <span class="me-3">
-                                                    Protein: {{ meal.protein }}g
-                                                </span>
-                                            {% endif %}
-
-                                            {% if meal.carbohydrates %}
-                                                <span class="me-3">
-                                                    Carbs: {{ meal.carbohydrates }}g
-                                                </span>
-                                            {% endif %}
-
-                                            {% if meal.fats %}
-                                                <span>
-                                                    Fat: {{ meal.fats }}g
-                                                </span>
-                                            {% endif %}
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
+                                {% if section.timing %}
+                                    <span class="text-secondary small">
+                                        {{ section.timing }}
+                                    </span>
+                                {% endif %}
                             </div>
 
-                        {% endfor %}
+                            {% if section.description %}
+                                <p class="text-secondary small mb-2">
+                                    {{ section.description }}
+                                </p>
+                            {% endif %}
 
-                    </div>
+                            {% if section.meals.all %}
+                                <ul class="mb-2">
+                                    {% for meal in section.meals.all %}
+                                        {% if not meal.option_section_id %}
+                                            <li>
+                                                {{ meal.name }}
+                                                {% if meal.quantity or meal.unit %}
+                                                    — {{ meal.quantity }} {{ meal.unit }}
+                                                {% endif %}
+                                                {% if meal.notes %}
+                                                    <span class="text-secondary small">({{ meal.notes }})</span>
+                                                {% endif %}
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+
+                            {% for option_section in section.option_sections.all %}
+                                <div class="border rounded-3 p-3 mb-2">
+                                    <div class="fw-semibold small mb-1">
+                                        {{ option_section.name }}
+                                        {% if option_section.instruction %}
+                                            <span class="text-secondary fw-normal">
+                                                ({{ option_section.instruction }})
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <ul class="mb-0">
+                                        {% for meal in option_section.meals.all %}
+                                            <li>
+                                                {{ meal.name }}
+                                                {% if meal.quantity or meal.unit %}
+                                                    — {{ meal.quantity }} {{ meal.unit }}
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endfor %}
 
                 {% else %}
 

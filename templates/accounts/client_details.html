@@ -162,23 +162,31 @@
 
             {% if diet_plans %}
                 {% for plan in diet_plans %}
-                    <div class="border rounded-3 p-3 mb-3">
+                    <a href="{% url 'diet_plan_detail' plan.id %}" class="text-decoration-none text-dark">
+                        <div class="border rounded-3 p-3 mb-3">
 
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ plan.name }}</strong>
+                            <div class="d-flex justify-content-between">
+                                <strong>
+                                    {{ plan.name }}
+                                </strong>
 
-                            {% if plan.is_active %}
-                                <span class="badge bg-dark">Active</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
+                                {% if plan.is_active %}
+                                    <span class="badge bg-dark">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </div>
+
+                            {% if plan.goal %}
+                                <div class="small text-muted">{{ plan.goal }}</div>
                             {% endif %}
+
+                            <small class="text-muted">
+                                {{ plan.start_date }}
+                            </small>
+
                         </div>
-
-                        <small class="text-muted">
-                            {{ plan.start_date }}
-                        </small>
-
-                    </div>
+                    </a>
                 {% endfor %}
             {% else %}
                 <p class="text-muted mb-0">

@@ -3,8 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.shortcuts import redirect, render
 from clients.models import ClientProfile
-from nutrition.models import DietPlan, Meal
-from nutrition.forms import DietPlanForm, MealForm
+from nutrition.models import DietPlan
 from progress.forms import ProgressRecordForm
 from progress.models import ProgressRecord
 from payments.forms import MembershipForm, PaymentForm
@@ -222,7 +221,6 @@ def client_details(request, client_id):
     diet_plans = (
         DietPlan.objects
         .filter(client=client.user)
-        .prefetch_related("meals")
         .order_by("-start_date")
     )
 
@@ -308,7 +306,7 @@ def client_dashboard(request):
             client=request.user,
             is_active=True,
         )
-        .prefetch_related("meals")
+        .prefetch_related("sections__meals", "sections__option_sections__meals")
         .order_by("-start_date")
         .first()
     )
@@ -379,83 +377,6 @@ def client_profile(request):
         {
             "form": form,
             "profile": profile,
-        },
-    )
-def create_diet_plan(request, client_id):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    if request.user.role != "DIETITIAN":
-        return redirect("dashboard")
-
-    client, _ = ClientProfile.objects.get_or_create(
-        user_id=client_id
-    )
-
-    if request.method == "POST":
-        form = DietPlanForm(request.POST)
-
-        if form.is_valid():
-            diet_plan = form.save(commit=False)
-            diet_plan.client = client.user
-            diet_plan.save()
-
-            Notification.objects.create(
-                user=client.user,
-                notification_type=Notification.NotificationType.DIET_PLAN,
-                title="New Diet Plan Assigned",
-                message=f"Your dietitian has assigned you a new diet plan: {diet_plan.name}.",
-            )
-
-            return redirect(
-                "add_meal", diet_plan_id=diet_plan.id,
-            )
-    else:
-        form = DietPlanForm()
-
-    return render(
-        request,
-        "accounts/create_diet_plan.html",
-        {
-            "form": form,
-            "client": client,
-        },
-    )
-
-
-def add_meal(request, diet_plan_id):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    if request.user.role != "DIETITIAN":
-        return redirect("dashboard")
-
-    diet_plan = DietPlan.objects.get(
-        id=diet_plan_id
-    )
-
-    if request.method == "POST":
-        form = MealForm(request.POST)
-
-        if form.is_valid():
-            meal = form.save(commit=False)
-            meal.diet_plan = diet_plan
-            meal.save()
-
-            return redirect(
-                "add_meal",
-                diet_plan_id=diet_plan.id,
-            )
-
-    else:
-        form = MealForm()
-
-    return render(
-        request,
-        "accounts/add_meal.html",
-        {
-            "form": form,
-            "diet_plan": diet_plan,
         },
     )
 def add_progress(request, client_id):

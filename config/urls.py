@@ -32,6 +32,8 @@ urlpatterns = [
     path("appointments/", include("appointments.urls")),
 
     path("notifications/", include("notifications.urls")),
+
+    path("dietitian/diet-plan/", include("nutrition.urls")),
 ]
 
 if settings.DEBUG:

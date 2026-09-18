@@ -8,8 +8,6 @@ from .views import (
     dietitian_dashboard,
     client_dashboard,
     client_profile,
-    create_diet_plan,
-    add_meal,
     add_progress,
     client_progress,
     create_membership,
@@ -50,16 +48,6 @@ urlpatterns = [
         "profile/",
         client_profile,
         name="client_profile",
-    ),
-    path(
-        "dietitian/diet-plan/create/<int:client_id>/",
-        create_diet_plan,
-        name="create_diet_plan",
-    ),
-    path(
-        "dietitian/diet-plan/<int:diet_plan_id>/add-meal/",
-         add_meal,
-        name="add_meal",
     ),
     path(
         "dietitian/client/<int:client_id>/progress/add/",
