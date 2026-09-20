@@ -22,7 +22,14 @@
         <div class="col-md-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><small class="text-secondary">Membership</small>{% if active_membership %}<h5 class="fw-bold mt-3">{{ active_membership.name }}</h5><small class="text-success">Active · until {{ active_membership.end_date }}</small>{% else %}<h5 class="fw-bold mt-3">Not active</h5>{% endif %}</div></div></div>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 mb-4"><a href="{% url 'client_progress' %}" class="btn btn-outline-dark">Progress</a>{% if has_membership_history %}<a href="{% url 'client_memberships_view' %}" class="btn btn-outline-dark">Membership & Payments</a>{% endif %}</div>
+    {% if active_membership %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3"><div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4"><h5 class="fw-bold">Progress</h5><p class="text-secondary">Track your progress.</p><a href="{% url 'client_progress' %}" class="btn btn-outline-dark btn-sm">View</a></div></div></div>
+        <div class="col-md-6 col-lg-3"><div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4"><h5 class="fw-bold">Membership & Payments</h5><p class="text-secondary">Plan and payment information.</p><a href="{% url 'client_memberships_view' %}" class="btn btn-outline-dark btn-sm">View</a></div></div></div>
+        <div class="col-md-6 col-lg-3"><div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4"><h5 class="fw-bold">Appointments</h5><p class="text-secondary">View and reschedule.</p><a href="{% url 'client_appointments' %}" class="btn btn-outline-dark btn-sm">View</a></div></div></div>
+        <div class="col-md-6 col-lg-3"><div class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4"><h5 class="fw-bold">Queries</h5><p class="text-secondary">Ask your dietitian.</p><a href="{% url 'client_queries' %}" class="btn btn-outline-dark btn-sm">View</a></div></div></div>
+    </div>
+    {% endif %}
 
     {% if membership_expiring_soon and active_membership %}
     <div class="modal fade" id="membershipExpiryModal" tabindex="-1" aria-labelledby="membershipExpiryModalLabel" aria-hidden="true">

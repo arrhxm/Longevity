@@ -7,10 +7,21 @@
 <div class="container py-5">
 
     <div class="mb-4">
-        <a href="{% url 'client_details' diet_plan.client.id %}"
-           class="text-decoration-none">
-            ← Back to Client
-        </a>
+        {% if request.GET.from == "view" %}
+
+            <a href="{% url 'client_details' client_id=diet_plan.client.id %}"
+            class="text-decoration-none">
+                ← Back to Client
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'create_diet_plan' client_id=diet_plan.client.id %}"
+            class="text-decoration-none">
+                ← Back to Diet Plans
+            </a>
+
+        {% endif %}
     </div>
 
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-5">

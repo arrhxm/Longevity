@@ -1,173 +1,106 @@
 {% extends "base.html" %}
-
-{% block title %}My Appointments | Longevity+{% endblock %}
-
+{% block title %}Appointments | Longevity+{% endblock %}
 {% block content %}
-
 <div class="container py-5">
-
-    <div class="mb-5">
-        <p class="text-secondary mb-1">
-            Longevity+
-        </p>
-
-        <h1 class="fw-bold mb-2">
-            My Appointments
-        </h1>
-
-        <p class="text-secondary">
-            View your upcoming and previous consultations.
-        </p>
+    <a href="{% url 'client_dashboard' %}" class="text-decoration-none">← Back to Dashboard</a>
+    <div class="mt-3 mb-4">
+        <h1 class="fw-bold">Appointments</h1>
+        <p class="text-secondary mb-0">View your upcoming appointments and appointment history.</p>
     </div>
 
-
-    {% if appointments %}
-
-        <div class="row g-4">
-
-            {% for appointment in appointments %}
-
-                <div class="col-md-6 col-lg-4">
-
-                    <div class="card border-0 shadow-sm h-100">
-
-                        <div class="card-body p-4">
-
-                            <div class="d-flex justify-content-between align-items-start mb-4">
-
-                                <div>
-                                    <small class="text-secondary">
-                                        Date
-                                    </small>
-
-                                    <h4 class="fw-bold mb-0">
-                                        {{ appointment.date }}
-                                    </h4>
-                                </div>
-
-                                {% if appointment.status == "SCHEDULED" %}
-                                    <span class="badge text-bg-success">
-                                        {{ appointment.get_status_display }}
-                                    </span>
-                                {% elif appointment.status == "COMPLETED" %}
-                                    <span class="badge text-bg-secondary">
-                                        {{ appointment.get_status_display }}
-                                    </span>
-                                {% elif appointment.status == "CANCELLED" %}
-                                    <span class="badge text-bg-danger">
-                                        {{ appointment.get_status_display }}
-                                    </span>
-                                {% else %}
-                                    <span class="badge text-bg-warning">
-                                        {{ appointment.get_status_display }}
-                                    </span>
-                                {% endif %}
-
-                            </div>
-
-
-                            <div class="mb-3">
-
-                                <small class="text-secondary">
-                                    Time
-                                </small>
-
-                                <div class="fw-semibold">
-                                    {{ appointment.time }}
-                                </div>
-
-                            </div>
-
-
-                            <div class="mb-3">
-
-                                <small class="text-secondary">
-                                    Duration
-                                </small>
-
-                                <div class="fw-semibold">
-                                    {{ appointment.duration_minutes }} minutes
-                                </div>
-
-                            </div>
-
-
-                            {% if appointment.reason %}
-
-                                <div class="mb-3">
-
-                                    <small class="text-secondary">
-                                        Reason
-                                    </small>
-
-                                    <div class="fw-semibold">
-                                        {{ appointment.reason }}
-                                    </div>
-
-                                </div>
-
-                            {% endif %}
-
-
-                            {% if appointment.notes %}
-
-                                <div>
-
-                                    <small class="text-secondary">
-                                        Notes
-                                    </small>
-
-                                    <p class="mb-0">
-                                        {{ appointment.notes }}
-                                    </p>
-
-                                </div>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-    {% else %}
-
-        <div class="card border-0 shadow-sm">
-
-            <div class="card-body text-center py-5">
-
-                <div class="display-5 mb-3">
-                    📅
-                </div>
-
-                <h4 class="fw-bold">
-                    No appointments yet
-                </h4>
-
-                <p class="text-secondary mb-0">
-                    Your scheduled consultations will appear here.
-                </p>
-
-            </div>
-
-        </div>
-
+    {% if not active_membership %}
+        <div class="alert alert-secondary rounded-4">Your membership has expired. You can view your appointment history, but new reschedule requests require an active membership.</div>
     {% endif %}
 
-
-    <div class="mt-4">
-
-        <a href="{% url 'client_dashboard' %}" class="btn btn-outline-dark">
-            ← Back to Dashboard
-        </a>
-
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4">Upcoming Appointments</h4>
+            {% with upcoming=appointments|dictsort:"date" %}
+            {% if appointments %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    {% for appointment in appointments %}
+                        {% if appointment.status == "SCHEDULED" and appointment.date >= today %}
+                        <tr>
+                            <td>{{ appointment.date|date:"d M Y" }}</td>
+                            <td>{{ appointment.time|time:"h:i A" }}</td>
+                            <td>{{ appointment.duration_minutes }} min</td>
+                            <td>{{ appointment.reason|default:"—" }}</td>
+                            <td><span class="badge bg-success">Scheduled</span></td>
+                            <td>
+                                {% if active_membership %}
+                                    {% if appointment.pending_reschedule %}
+                                        <span class="badge bg-warning text-dark">Reschedule Pending</span>
+                                    {% else %}
+                                        <form method="post" action="{% url 'request_reschedule' appointment.id %}" class="d-flex gap-2 flex-wrap">
+                                            {% csrf_token %}
+                                            <input type="date" name="requested_date" class="form-control form-control-sm" required>
+                                            <input type="time" name="requested_time" class="form-control form-control-sm" required>
+                                            <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason (optional)">
+                                            <button class="btn btn-outline-dark btn-sm">Request Reschedule</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<p class="text-secondary mb-0">No appointments yet.</p>{% endif %}
+            {% endwith %}
+        </div>
     </div>
 
-</div>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4">Reschedule History</h4>
+            {% if reschedule_history %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Original</th><th>Requested</th><th>Status</th><th>Reason</th></tr></thead>
+                        <tbody>
+                        {% for item in reschedule_history %}
+                            <tr>
+                                <td>{{ item.original_date|date:"d M Y" }} · {{ item.original_time|time:"h:i A" }}</td>
+                                <td>{{ item.requested_date|date:"d M Y" }} · {{ item.requested_time|time:"h:i A" }}</td>
+                                <td>{{ item.get_status_display }}</td>
+                                <td>{{ item.reason|default:"—" }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}<p class="text-secondary mb-0">No reschedule requests yet.</p>{% endif %}
+        </div>
+    </div>
 
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4">Appointment History</h4>
+            {% if appointments %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Date</th><th>Time</th><th>Reason</th><th>Status</th></tr></thead>
+                    <tbody>
+                    {% for appointment in appointments %}
+                        {% if appointment.status != "SCHEDULED" or appointment.date < today %}
+                        <tr>
+                            <td>{{ appointment.date|date:"d M Y" }}</td>
+                            <td>{{ appointment.time|time:"h:i A" }}</td>
+                            <td>{{ appointment.reason|default:"—" }}</td>
+                            <td>{{ appointment.get_status_display }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<p class="text-secondary mb-0">No appointment history yet.</p>{% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

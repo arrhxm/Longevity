@@ -1,5 +1,7 @@
 from django.urls import path
 
+from . import views
+
 from .views import (
     add_meal_to_option_section,
     add_meal_to_section,
@@ -11,7 +13,7 @@ from .views import (
     delete_option_section,
     delete_section,
     diet_plan_detail,
-    edit_diet_plan,
+    edit_diet_plan, 
     edit_meal,
     edit_option_section,
     edit_section,
@@ -92,7 +94,11 @@ urlpatterns = [
         delete_meal,
         name="delete_meal",
     ),
-
+    path(
+        "diet-plan/<int:diet_plan_id>/delete/",
+        views.delete_diet_plan,
+        name="diet_plan_delete",
+    ),
     path("food-log/upload/<int:section_id>/", upload_food_log, name="upload_food_log"),
     path("my-food-logs/", client_food_logs, name="client_food_logs"),
     path("food-logs/", dietitian_food_logs, name="dietitian_food_logs"),

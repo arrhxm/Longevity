@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Exists, OuterRef, Q, Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 from clients.models import ClientProfile, Enrollment
 from nutrition.models import DietPlan
 from progress.models import ProgressRecord, ProgressPhotoSet
@@ -12,6 +13,7 @@ from decimal import Decimal
 from datetime import timedelta
 from django.shortcuts import get_object_or_404 
 import random
+import json
 from .models import User, RegistrationOTP
 from .forms import OTPRequestForm, CompleteRegistrationForm,ClientProfileForm
 from appointments.models import Appointment
@@ -204,6 +206,13 @@ def dietitian_dashboard(request):
     appointment_count = Appointment.objects.filter(
         status=Appointment.Status.SCHEDULED).count()
 
+    from queries.models import Query
+    query_count = Query.objects.filter(dietitian=request.user).count()
+    new_query_count = Query.objects.filter(
+        dietitian=request.user,
+        status=Query.Status.OPEN,
+    ).count()
+
     return render(
         request,
         "accounts/dietitian_dashboard.html",
@@ -211,6 +220,8 @@ def dietitian_dashboard(request):
             "clients": clients,
             "diet_plan_count": diet_plan_count,
             "appointment_count": appointment_count,
+            "query_count": query_count,
+            "new_query_count": new_query_count,
             "search_query": search_query,
         },
     )
@@ -349,6 +360,14 @@ def client_dashboard(request):
             .first()
         )
 
+    appointment_count = Appointment.objects.filter(client=profile).count()
+    query_count = 0
+    try:
+        from queries.models import Query
+        query_count = Query.objects.filter(client=profile).count()
+    except Exception:
+        pass
+
     next_appointment = (
         Appointment.objects
         .filter(client=profile, status=Appointment.Status.SCHEDULED)
@@ -373,6 +392,8 @@ def client_dashboard(request):
             "membership_expiring_soon": membership_expiring_soon,
             "membership_days_remaining": membership_days_remaining,
             "next_appointment": next_appointment,
+            "appointment_count": appointment_count,
+            "query_count": query_count,
             "initial_measurements_complete": initial_measurements_complete,
             "notifications": notifications,
         },
@@ -471,17 +492,17 @@ def client_progress(request):
         .order_by("date")
     )
 
-    chart_labels = [
+    chart_labels = json.dumps([
         record.date.strftime("%d %b")
         for record in progress_records
         if record.weight is not None
-    ]
+    ])
 
-    chart_weights = [
+    chart_weights = json.dumps([
         float(record.weight)
         for record in progress_records
         if record.weight is not None
-    ]
+    ])
     progress_photo_sets = ProgressPhotoSet.objects.filter(client=profile).order_by("-date", "-id")
 
     return render(

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Queries | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5">
+<a href="{% url 'client_dashboard' %}" class="text-decoration-none">← Back to Dashboard</a>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-3 mb-4"><div><h1 class="fw-bold">Queries</h1><p class="text-secondary mb-0">Ask your dietitian and continue previous conversations.</p></div>{% if can_create %}<a href="{% url 'create_query' %}" class="btn btn-dark">+ New Query</a>{% endif %}</div>
+{% if not can_create %}<div class="alert alert-secondary rounded-4">Your membership has expired. Renew your membership to contact your dietitian. Your previous query history remains available.</div>{% endif %}
+<div class="row g-4">
+{% for query in queries %}<div class="col-12"><div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4"><div class="d-flex justify-content-between gap-3"><div><h5 class="fw-bold mb-1">{{ query.subject }}</h5><small class="text-secondary">Updated {{ query.updated_at|date:"d M Y, h:i A" }}</small></div><span class="badge {% if query.status == 'OPEN' %}bg-primary{% elif query.status == 'IN_PROGRESS' %}bg-warning text-dark{% elif query.status == 'ANSWERED' %}bg-success{% else %}bg-secondary{% endif %}">{{ query.get_status_display }}</span></div><div class="mt-3"><a href="{% url 'query_detail' query.id %}" class="btn btn-outline-dark btn-sm">View Conversation</a></div></div></div></div>{% empty %}<div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body text-center py-5"><h5 class="fw-bold">No queries yet</h5><p class="text-secondary mb-0">Create a query when you need help from your dietitian.</p></div></div></div>{% endfor %}
+</div></div>
+{% endblock %}

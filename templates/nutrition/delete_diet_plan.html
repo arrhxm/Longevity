@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Diet Plan | Longevity+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-5 text-center">
+
+                    <h2 class="fw-bold mb-3">
+                        Delete Diet Plan?
+                    </h2>
+
+                    <p class="text-secondary">
+                        Are you sure you want to delete
+                        <strong>{{ diet_plan.name }}</strong>?
+                    </p>
+
+                    <p class="text-danger small">
+                        This action cannot be undone.
+                    </p>
+
+                    <form method="POST" class="mt-4">
+
+                        {% csrf_token %}
+
+                        <div class="d-flex justify-content-center gap-3">
+
+                            <a
+                                href="{% url 'diet_plan_detail' diet_plan_id=diet_plan.id %}"
+                                class="btn btn-outline-secondary"
+                            >
+                                Cancel
+                            </a>
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger"
+                            >
+                                Delete Diet Plan
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

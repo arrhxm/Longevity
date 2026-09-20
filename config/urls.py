@@ -34,6 +34,7 @@ urlpatterns = [
     path("progress/", include("progress.urls")),
 
     path("notifications/", include("notifications.urls")),
+    path("queries/", include("queries.urls")),
 
     path("dietitian/diet-plan/", include("nutrition.urls")),
 ]

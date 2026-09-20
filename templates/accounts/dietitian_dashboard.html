@@ -25,6 +25,9 @@
             <a href="{% url 'dietitian_appointments' %}" class="btn btn-outline-dark">
                 Appointments
             </a>
+            <a href="{% url 'dietitian_queries' %}" class="btn btn-outline-dark">
+                Queries{% if new_query_count %} ({{ new_query_count }}){% endif %}
+            </a>
 
             <a href="{% url 'revenue_report' %}" class="btn btn-dark">
                 Revenue Report
@@ -67,13 +70,16 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <p class="text-secondary mb-1">
-                        Appointments
-                    </p>
-
-                    <h2 class="fw-bold">
-                        {{ appointment_count }}
-                    </h2>
+                    <p class="text-secondary mb-1">Appointments</p>
+                    <h2 class="fw-bold">{{ appointment_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <p class="text-secondary mb-1">Queries</p>
+                    <h2 class="fw-bold">{{ query_count }}</h2>
                 </div>
             </div>
         </div>

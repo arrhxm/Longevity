@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}New Query | Longevity+{% endblock %}
+{% block content %}
+<div class="container py-5"><a href="{% url 'client_queries' %}" class="text-decoration-none">← Back to Queries</a><div class="row justify-content-center mt-3"><div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-lg-5"><h1 class="fw-bold mb-1">New Query</h1><p class="text-secondary mb-4">Send a question to your dietitian.</p><form method="post">{% csrf_token %}<div class="mb-3"><label class="form-label">Subject</label>{{ form.subject }}{{ form.subject.errors }}</div><div class="mb-4"><label class="form-label">Your Question</label>{{ message_form.message }}{{ message_form.message.errors }}</div><button class="btn btn-dark">Submit Query</button></form></div></div></div></div></div>
+{% endblock %}

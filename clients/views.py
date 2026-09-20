@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from notifications.models import Notification
+from accounts.models import User
 from payments.models import Membership, MembershipPlan, Payment
 
 from .forms import EnrollmentProfileForm
@@ -33,6 +34,16 @@ def _client_profile(request):
 
 def _require_client(request):
     return request.user.is_authenticated and request.user.role == "CLIENT"
+
+
+def _ensure_assigned_dietitian(profile):
+    if profile.assigned_dietitian_id:
+        return profile.assigned_dietitian
+    dietitian = User.objects.filter(role=User.Role.DIETITIAN).order_by("id").first()
+    if dietitian:
+        profile.assigned_dietitian = dietitian
+        profile.save(update_fields=["assigned_dietitian"])
+    return dietitian
 
 
 @login_required
@@ -118,6 +129,8 @@ def renewal_payment(request):
                 status=Membership.Status.ACTIVE,
                 notes=f"Membership renewal through Longevity+. Plan: {plan.name}.",
             )
+
+            _ensure_assigned_dietitian(profile)
 
             Payment.objects.create(
                 membership=membership,
@@ -245,6 +258,8 @@ def enrollment_payment(request):
                     status=Membership.Status.ACTIVE,
                     notes=f"Enrolled through Longevity+ enrollment. Goal: {profile.get_health_goal_display()}.",
                 )
+
+            _ensure_assigned_dietitian(profile)
 
             if not membership.payments.filter(status=Payment.Status.PAID).exists():
                 Payment.objects.create(

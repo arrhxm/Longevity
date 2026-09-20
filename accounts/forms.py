@@ -11,38 +11,62 @@ class ClientProfileForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "country",
-            "state",
             "city",
             "health_goal",
             "medical_notes",
         ]
         widgets = {
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "date_of_birth": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-            "gender": forms.Select(attrs={"class": "form-select"}),
-            "country": forms.Select(attrs={"class": "form-select", "id": "id_country"}),
-            "state": forms.Select(attrs={"class": "form-select", "id": "id_state"}),
-            "city": forms.TextInput(attrs={"class": "form-control", "id": "id_city"}),
-            "health_goal": forms.Select(attrs={"class": "form-select"}),
-            "medical_notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "phone": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "date_of_birth": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "gender": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "country": forms.Select(
+                attrs={
+                    "class": "form-select",
+                    "id": "id_country",
+                }
+            ),
+            "city": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "id": "id_city",
+                }
+            ),
+            "health_goal": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "medical_notes": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["state"].choices = [("", "Select state")] + list(ClientProfile.INDIA_STATE_CHOICES)
-        # Phone belongs to the registered account and is not edited from the profile.
+
+        # Phone belongs to the registered account
+        # and cannot be changed from the profile.
         self.fields["phone"].disabled = True
 
     def clean(self):
         cleaned = super().clean()
-        if cleaned.get("country") == "IN":
-            if not cleaned.get("state"):
-                self.add_error("state", "Please select your state.")
-            if not cleaned.get("city"):
-                self.add_error("city", "Please enter your city.")
-        else:
-            cleaned["state"] = ""
-            cleaned["city"] = ""
+
+        if not cleaned.get("city"):
+            self.add_error(
+                "city",
+                "Please enter your city."
+            )
+
         return cleaned
 
 User = get_user_model()

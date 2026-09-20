@@ -68,6 +68,15 @@ class ClientProfile(models.Model):
         ("Puducherry", "Puducherry"),
     ]
 
+    assigned_dietitian = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_clients",
+        limit_choices_to={"role": "DIETITIAN"},
+    )
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

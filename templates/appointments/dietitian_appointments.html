@@ -1,6 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Appointments | Longevity+{% endblock %}
+{% block title %}Appointments | Longevity+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <h4 class="fw-bold mb-4">Reschedule Requests</h4>
+        {% if reschedule_requests %}
+            {% for item in reschedule_requests %}
+                <div class="border rounded-4 p-3 mb-3">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>{{ item.client.user.get_full_name|default:item.client.user.username }}</strong>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    </div>
+                    <p class="mb-1 mt-2">Current: {{ item.original_date|date:"d M Y" }} · {{ item.original_time|time:"h:i A" }}</p>
+                    <p class="mb-1">Requested: <strong>{{ item.requested_date|date:"d M Y" }} · {{ item.requested_time|time:"h:i A" }}</strong></p>
+                    {% if item.reason %}<p class="text-secondary mb-3">Reason: {{ item.reason }}</p>{% endif %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form method="post" action="{% url 'handle_reschedule_request' item.id %}">{% csrf_token %}<button name="action" value="accept" class="btn btn-dark btn-sm">Accept Requested Time</button></form>
+                        <button class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse" data-bs-target="#choose{{ item.id }}">Choose Another Time</button>
+                        <form method="post" action="{% url 'handle_reschedule_request' item.id %}">{% csrf_token %}<button name="action" value="decline" class="btn btn-outline-danger btn-sm">Decline</button></form>
+                    </div>
+                    <div class="collapse mt-3" id="choose{{ item.id }}">
+                        <form method="post" action="{% url 'choose_reschedule_time' item.id %}" class="row g-2">
+                            {% csrf_token %}
+                            <div class="col-md-5"><input type="date" name="date" class="form-control" required></div>
+                            <div class="col-md-5"><input type="time" name="time" class="form-control" required></div>
+                            <div class="col-md-2"><button class="btn btn-dark w-100">Confirm</button></div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-secondary mb-0">No pending reschedule requests.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
 
 {% block content %}
 
@@ -173,6 +208,41 @@
         </div>
     </div>
 
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <h4 class="fw-bold mb-4">Reschedule Requests</h4>
+        {% if reschedule_requests %}
+            {% for item in reschedule_requests %}
+                <div class="border rounded-4 p-3 mb-3">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>{{ item.client.user.get_full_name|default:item.client.user.username }}</strong>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    </div>
+                    <p class="mb-1 mt-2">Current: {{ item.original_date|date:"d M Y" }} · {{ item.original_time|time:"h:i A" }}</p>
+                    <p class="mb-1">Requested: <strong>{{ item.requested_date|date:"d M Y" }} · {{ item.requested_time|time:"h:i A" }}</strong></p>
+                    {% if item.reason %}<p class="text-secondary mb-3">Reason: {{ item.reason }}</p>{% endif %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form method="post" action="{% url 'handle_reschedule_request' item.id %}">{% csrf_token %}<button name="action" value="accept" class="btn btn-dark btn-sm">Accept Requested Time</button></form>
+                        <button class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse" data-bs-target="#choose{{ item.id }}">Choose Another Time</button>
+                        <form method="post" action="{% url 'handle_reschedule_request' item.id %}">{% csrf_token %}<button name="action" value="decline" class="btn btn-outline-danger btn-sm">Decline</button></form>
+                    </div>
+                    <div class="collapse mt-3" id="choose{{ item.id }}">
+                        <form method="post" action="{% url 'choose_reschedule_time' item.id %}" class="row g-2">
+                            {% csrf_token %}
+                            <div class="col-md-5"><input type="date" name="date" class="form-control" required></div>
+                            <div class="col-md-5"><input type="time" name="time" class="form-control" required></div>
+                            <div class="col-md-2"><button class="btn btn-dark w-100">Confirm</button></div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-secondary mb-0">No pending reschedule requests.</p>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

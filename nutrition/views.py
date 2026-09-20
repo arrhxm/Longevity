@@ -23,6 +23,11 @@ def create_diet_plan(request, client_id):
         return redirect("dashboard")
 
     client = get_object_or_404(ClientProfile, user_id=client_id)
+    diet_plans = (
+        DietPlan.objects
+        .filter(client=client.user)
+        .order_by("-start_date")
+    )
 
     if not Membership.objects.filter(client=client, status=Membership.Status.ACTIVE).exists():
         return redirect("client_details", client_id=client.user_id)
@@ -59,6 +64,7 @@ def create_diet_plan(request, client_id):
         {
             "form": form,
             "client": client,
+            "diet_plans": diet_plans,
         },
     )
 
@@ -75,19 +81,48 @@ def edit_diet_plan(request, diet_plan_id):
 
         if form.is_valid():
             form.save()
-            return redirect("diet_plan_detail", diet_plan_id=diet_plan.id)
+            return redirect(
+                "diet_plan_detail",
+                diet_plan_id=diet_plan.id
+            )
 
     else:
         form = DietPlanForm(instance=diet_plan)
 
     return render(
         request,
-        "nutrition/create_diet_plan.html",
+        "nutrition/edit_diet_plan.html",
         {
             "form": form,
             "client": diet_plan.client.client_profile,
             "diet_plan": diet_plan,
-            "editing": True,
+        },
+    )
+
+def delete_diet_plan(request, diet_plan_id):
+    if not _require_dietitian(request):
+        return redirect("dashboard")
+
+    diet_plan = get_object_or_404(
+        DietPlan,
+        id=diet_plan_id
+    )
+
+    client_id = diet_plan.client.id
+
+    if request.method == "POST":
+        diet_plan.delete()
+        return redirect(
+            "create_diet_plan",
+            client_id=client_id
+        )
+
+    return render(
+        request,
+        "nutrition/delete_diet_plan.html",
+        {
+            "diet_plan": diet_plan,
+            "client": diet_plan.client.client_profile,
         },
     )
 
