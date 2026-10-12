@@ -26,7 +26,10 @@
             <small class="text-muted">Phone</small><div class="fw-semibold">{{ client.user.phone|default:'Not provided' }}</div>
           </div>
           <div class="col-md-4">
-            <small class="text-muted">D.O.B.</small><div class="fw-semibold">{{ client.date_of_birth|default:'Not provided' }}</div>
+            <small class="text-muted">D.O.B.</small><div class="fw-semibold">{% if client.date_of_birth %}{{ client.date_of_birth|date:"d F Y" }}{% else %}Not provided{% endif %}</div>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Age</small><div class="fw-semibold">{% if client.age != None %}{{ client.age }} years{% else %}Not provided{% endif %}</div>
           </div>
           <div class="col-md-4">
             <small class="text-muted">Gender</small><div class="fw-semibold">{{ client.get_gender_display|default:'Not provided' }}</div>
@@ -42,6 +45,9 @@
           </div>
           <div class="col-md-4">
             <small class="text-muted">Goal</small><div class="fw-semibold">{{ client.get_health_goal_display|default:'Not selected' }}</div>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Dietary Preference</small><div class="fw-semibold">{{ client.get_dietary_preference_display|default:'Not selected' }}</div>
           </div>
         </div>
       </div>

@@ -127,9 +127,13 @@
 
                                 {{ form.date_of_birth }}
                                 {{ form.date_of_birth.errors }}
-
+                                <div class="form-text">Age is calculated automatically from your date of birth.</div>
                             </div>
 
+                            <div class="col-md-6">
+                                <label class="form-label">Age</label>
+                                <input id="calculated-age" class="form-control" value="{% if profile.age != None %}{{ profile.age }} years{% endif %}" readonly placeholder="Calculated from date of birth">
+                            </div>
 
                             <!-- Gender -->
 
@@ -173,6 +177,21 @@
                             </div>
 
 
+                            <div class="col-md-6">
+                                <label class="form-label">Height (cm)</label>
+                                {{ form.height }}{{ form.height.errors }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Current Weight (kg)</label>
+                                {{ form.current_weight }}{{ form.current_weight.errors }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Goal Weight (kg)</label>
+                                {{ form.goal_weight }}{{ form.goal_weight.errors }}
+                            </div>
+
                             <!-- Goal -->
 
                             <div class="col-md-6">
@@ -186,6 +205,12 @@
 
                             </div>
 
+
+                            <div class="col-md-6">
+                                <label class="form-label">Dietary Preference</label>
+                                {{ form.dietary_preference }}{{ form.dietary_preference.errors }}
+                                <div class="form-text">Select your usual diet type.</div>
+                            </div>
 
                             <!-- Medical Notes -->
 
@@ -224,4 +249,25 @@
 
 </div>
 
+<script>
+(function () {
+    const dob = document.getElementById("id_date_of_birth");
+    const ageOutput = document.getElementById("calculated-age");
+    function updateAge() {
+        if (!dob || !ageOutput || !dob.value) {
+            if (ageOutput) ageOutput.value = "";
+            return;
+        }
+        const [year, month, day] = dob.value.split("-").map(Number);
+        const birth = new Date(year, month - 1, day);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        if (today.getMonth() < birth.getMonth() ||
+            (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+        ageOutput.value = age >= 0 ? `${age} years` : "Invalid date";
+    }
+    if (dob) dob.addEventListener("change", updateAge);
+    updateAge();
+})();
+</script>
 {% endblock %}

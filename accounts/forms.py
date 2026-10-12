@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from clients.models import ClientProfile
 from django.contrib.auth import get_user_model
 
@@ -13,6 +14,10 @@ class ClientProfileForm(forms.ModelForm):
             "country",
             "city",
             "health_goal",
+            "height",
+            "current_weight",
+            "goal_weight",
+            "dietary_preference",
             "medical_notes",
         ]
         widgets = {
@@ -43,6 +48,10 @@ class ClientProfileForm(forms.ModelForm):
             "health_goal": forms.Select(
                 attrs={"class": "form-select"}
             ),
+            "height": forms.NumberInput(attrs={"class": "form-control", "min": "1", "step": "0.01"}),
+            "current_weight": forms.NumberInput(attrs={"class": "form-control", "min": "1", "step": "0.01"}),
+            "goal_weight": forms.NumberInput(attrs={"class": "form-control", "min": "1", "step": "0.01"}),
+            "dietary_preference": forms.Select(attrs={"class": "form-select"}),
             "medical_notes": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -57,9 +66,32 @@ class ClientProfileForm(forms.ModelForm):
         # Phone belongs to the registered account
         # and cannot be changed from the profile.
         self.fields["phone"].disabled = True
+        self.fields["dietary_preference"].choices = [
+            ("", "Select your usual diet type")
+        ] + list(ClientProfile.DIETARY_PREFERENCE_CHOICES)
+        self.fields["date_of_birth"].required = True
+        self.fields["dietary_preference"].required = True
+
+    def clean_date_of_birth(self):
+        dob = self.cleaned_data.get("date_of_birth")
+        if dob and dob > timezone.localdate():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return dob
+
+    def clean_dietary_preference(self):
+        value = self.cleaned_data.get("dietary_preference")
+        allowed = {choice[0] for choice in ClientProfile.DIETARY_PREFERENCE_CHOICES}
+        if value not in allowed:
+            raise forms.ValidationError("Select a valid dietary preference.")
+        return value
 
     def clean(self):
         cleaned = super().clean()
+
+        for field in ("height", "current_weight", "goal_weight"):
+            value = cleaned.get(field)
+            if value is not None and value <= 0:
+                self.add_error(field, "Value must be greater than zero.")
 
         if not cleaned.get("city"):
             self.add_error(

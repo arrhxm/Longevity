@@ -198,7 +198,8 @@ def enrollment_plan(request):
     if enrollment.status == Enrollment.Status.COMPLETED:
         return redirect("client_dashboard")
 
-    if not profile.date_of_birth or not profile.gender or not profile.health_goal:
+    if (not profile.date_of_birth or not profile.gender or not profile.health_goal
+            or not profile.dietary_preference or not profile.height or not profile.current_weight):
         return redirect("enrollment_profile")
 
     plans = MembershipPlan.objects.filter(country=profile.country, is_active=True)

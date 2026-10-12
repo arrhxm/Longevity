@@ -34,33 +34,51 @@
                         <h5 class="fw-bold mb-4">Personal Details</h5>
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">D.O.B.</label>{{ form.date_of_birth }}
+                                <label class="form-label">Date of Birth</label>{{ form.date_of_birth }}
                                 {{ form.date_of_birth.errors }}
+                                <div class="form-text">Use the date picker to select your date of birth.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Gender</label>{{ form.gender }}
-                                {{ form.gender.errors }}
+                                <label class="form-label">Age</label>
+                                <input id="calculated-age" class="form-control" value="{% if profile.age != None %}{{ profile.age }} years{% endif %}" readonly placeholder="Calculated from date of birth">
+                                <div class="form-text">Calculated automatically; you cannot edit your age.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Country</label>{{ form.country }}
-                                {{ form.country.errors }}
+                                <label class="form-label">Gender</label>{{ form.gender }}{{ form.gender.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>{{ form.country }}{{ form.country.errors }}
                             </div>
                         </div>
 
                         <div id="india-location" class="row g-4 mt-1">
                             <div class="col-md-6">
-                                <label class="form-label">State</label>{{ form.state }}
-                                {{ form.state.errors }}
+                                <label class="form-label">State</label>{{ form.state }}{{ form.state.errors }}
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">City</label>{{ form.city }}
-                                {{ form.city.errors }}
+                                <label class="form-label">City</label>{{ form.city }}{{ form.city.errors }}
                             </div>
                         </div>
 
-                        <div class="mt-4">
-                            <label class="form-label">Goal</label>{{ form.health_goal }}
-                            {{ form.health_goal.errors }}
+                        <h5 class="fw-bold mt-4 mb-3">Physical Information</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Height (cm)</label>{{ form.height }}{{ form.height.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Current Weight (kg)</label>{{ form.current_weight }}{{ form.current_weight.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Goal</label>{{ form.health_goal }}{{ form.health_goal.errors }}
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold mt-4 mb-3">Dietary Information</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Dietary Preference</label>
+                            {{ form.dietary_preference }}
+                            {{ form.dietary_preference.errors }}
+                            <div class="form-text">Select your usual diet type.</div>
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
@@ -78,13 +96,33 @@
     const country = document.getElementById("id_country");
     const location = document.getElementById("india-location");
     const state = document.getElementById("id_state");
+    const dob = document.getElementById("id_date_of_birth");
+    const ageOutput = document.getElementById("calculated-age");
+
+    function updateAge() {
+        if (!dob || !ageOutput || !dob.value) {
+            if (ageOutput) ageOutput.value = "";
+            return;
+        }
+        const parts = dob.value.split("-").map(Number);
+        const birth = new Date(parts[0], parts[1] - 1, parts[2]);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        if (today.getMonth() < birth.getMonth() ||
+            (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        ageOutput.value = age >= 0 ? `${age} years` : "Invalid date";
+    }
     function updateLocation() {
         const india = country.value === "IN";
         location.style.display = india ? "flex" : "none";
         state.disabled = !india;
     }
     country.addEventListener("change", updateLocation);
+    if (dob) dob.addEventListener("change", updateAge);
     updateLocation();
+    updateAge();
 })();
 </script>
 {% endblock %}
